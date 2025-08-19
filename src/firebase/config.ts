@@ -6,13 +6,13 @@ import { getMessaging, isSupported } from 'firebase/messaging'
 import { getAnalytics } from 'firebase/analytics'
 
 const firebaseConfig = {
-  apiKey: process.env.VITE_FIREBASE_API_KEY || "your-api-key",
-  authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN || "your-project.firebaseapp.com",
-  projectId: process.env.VITE_FIREBASE_PROJECT_ID || "your-project-id",
-  storageBucket: process.env.VITE_FIREBASE_STORAGE_BUCKET || "your-project.appspot.com",
-  messagingSenderId: process.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "123456789",
-  appId: process.env.VITE_FIREBASE_APP_ID || "your-app-id",
-  measurementId: process.env.VITE_FIREBASE_MEASUREMENT_ID || "G-MEASUREMENT_ID"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "your-api-key",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "your-project.firebaseapp.com",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "your-project-id",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "your-project.appspot.com",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "123456789",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "your-app-id",
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "G-MEASUREMENT_ID"
 }
 
 const app = initializeApp(firebaseConfig)

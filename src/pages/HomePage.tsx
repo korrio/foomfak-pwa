@@ -277,47 +277,212 @@ const HomePage: React.FC = () => {
 
 // Auth Screen Component
 const AuthScreen: React.FC = () => {
-  const { login, register } = useAuth()
-  const [isLogin, setIsLogin] = useState(true)
+  const { sendOTP, verifyOTP, registerWithPhone, setupRecaptcha } = useAuth()
+  const [currentStep, setCurrentStep] = useState<'phone' | 'otp' | 'register'>('phone')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [confirmationResult, setConfirmationResult] = useState<any>(null)
+  const [isNewUser, setIsNewUser] = useState(false)
   const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-    name: '',
     phone: '',
+    otp: '',
+    name: '',
     role: 'parent' as 'parent' | 'caretaker',
     childName: '',
     childAge: ''
   })
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handlePhoneSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError('')
 
     try {
-      if (isLogin) {
-        await login(formData.email, formData.password)
-      } else {
-        await register({
-          ...formData,
-          childAge: formData.childAge ? parseInt(formData.childAge) : undefined
-        })
-      }
+      const result = await sendOTP(formData.phone)
+      setConfirmationResult(result)
+      setCurrentStep('otp')
     } catch (error: any) {
-      setError(error.message || 'เกิดข้อผิดพลาด')
+      if (error.code === 'auth/user-not-found') {
+        setIsNewUser(true)
+        setCurrentStep('register')
+      } else {
+        setError('ไม่สามารถส่ง OTP ได้: ' + (error.message || 'กรุณาลองใหม่'))
+      }
     } finally {
       setLoading(false)
     }
   }
+
+  const handleOTPVerify = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setError('')
+
+    try {
+      await verifyOTP(confirmationResult, formData.otp)
+      // Auth state change will handle navigation automatically
+    } catch (error: any) {
+      setError('รหัส OTP ไม่ถูกต้อง')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setError('')
+
+    try {
+      const result = await registerWithPhone({
+        ...formData,
+        childAge: formData.childAge ? parseInt(formData.childAge) : undefined
+      })
+      setConfirmationResult(result)
+      setCurrentStep('otp')
+    } catch (error: any) {
+      setError('ไม่สามารถสมัครสมาชิกได้: ' + (error.message || 'กรุณาลองใหม่'))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const renderPhoneStep = () => (
+    <form onSubmit={handlePhoneSubmit} className="space-y-4">
+      <div>
+        <input
+          type="tel"
+          placeholder="หมายเลขโทรศัพท์ (08xxxxxxxx)"
+          value={formData.phone}
+          onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+          className="form-input"
+          required
+          maxLength={10}
+        />
+        <p className="text-xs text-gray-500 mt-1">ใส่เบอร์โทรศัพท์เพื่อรับรหัส OTP</p>
+      </div>
+
+      <button
+        type="submit"
+        disabled={loading}
+        className="w-full btn-primary disabled:opacity-50"
+      >
+        {loading ? 'กำลังส่ง OTP...' : 'ส่งรหัส OTP'}
+      </button>
+    </form>
+  )
+
+  const renderOTPStep = () => (
+    <form onSubmit={handleOTPVerify} className="space-y-4">
+      <div>
+        <input
+          type="text"
+          placeholder="รหัส OTP (6 หลัก)"
+          value={formData.otp}
+          onChange={(e) => setFormData({ ...formData, otp: e.target.value })}
+          className="form-input text-center text-lg tracking-widest"
+          required
+          maxLength={6}
+          autoComplete="one-time-code"
+        />
+        <p className="text-xs text-gray-500 mt-1 text-center">
+          ใส่รหัส OTP ที่ส่งไปยัง {formData.phone}
+        </p>
+      </div>
+
+      <button
+        type="submit"
+        disabled={loading}
+        className="w-full btn-primary disabled:opacity-50"
+      >
+        {loading ? 'กำลังยืนยัน...' : 'ยืนยันรหัส'}
+      </button>
+
+      <button
+        type="button"
+        onClick={() => setCurrentStep('phone')}
+        className="w-full text-gray-600 hover:text-gray-700 text-sm"
+      >
+        กลับไปแก้ไขเบอร์โทร
+      </button>
+    </form>
+  )
+
+  const renderRegisterStep = () => (
+    <form onSubmit={handleRegister} className="space-y-4">
+      <div>
+        <input
+          type="text"
+          placeholder="ชื่อ-นามสกุล"
+          value={formData.name}
+          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+          className="form-input"
+          required
+        />
+      </div>
+
+      <div>
+        <select
+          value={formData.role}
+          onChange={(e) => setFormData({ ...formData, role: e.target.value as 'parent' | 'caretaker' })}
+          className="form-input"
+        >
+          <option value="parent">ผู้ปกครอง</option>
+          <option value="caretaker">ผู้ดูแลเด็ก</option>
+        </select>
+      </div>
+
+      {formData.role === 'parent' && (
+        <>
+          <div>
+            <input
+              type="text"
+              placeholder="ชื่อลูก"
+              value={formData.childName}
+              onChange={(e) => setFormData({ ...formData, childName: e.target.value })}
+              className="form-input"
+            />
+          </div>
+          <div>
+            <input
+              type="number"
+              placeholder="อายุลูก (ปี)"
+              value={formData.childAge}
+              onChange={(e) => setFormData({ ...formData, childAge: e.target.value })}
+              className="form-input"
+            />
+          </div>
+        </>
+      )}
+
+      <button
+        type="submit"
+        disabled={loading}
+        className="w-full btn-primary disabled:opacity-50"
+      >
+        {loading ? 'กำลังสมัครสมาชิก...' : 'สมัครสมาชิก'}
+      </button>
+
+      <button
+        type="button"
+        onClick={() => setCurrentStep('phone')}
+        className="w-full text-gray-600 hover:text-gray-700 text-sm"
+      >
+        กลับไปแก้ไขเบอร์โทร
+      </button>
+    </form>
+  )
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center p-4">
       <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
         <div className="text-center mb-6">
           <h1 className="text-3xl font-bold text-blue-600 mb-2">ฟูมฟัก</h1>
-          <p className="text-gray-600">แอปบันทึกกิจกรรมเลี้ยงลูก</p>
+          <p className="text-gray-600">
+            {currentStep === 'phone' && 'เข้าสู่ระบบด้วยเบอร์โทร'}
+            {currentStep === 'otp' && 'ยืนยันรหัส OTP'}
+            {currentStep === 'register' && 'สมัครสมาชิกใหม่'}
+          </p>
         </div>
 
         {error && (
@@ -326,118 +491,24 @@ const AuthScreen: React.FC = () => {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <input
-              type="email"
-              placeholder="อีเมล"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className="form-input"
-              required
-            />
+        {currentStep === 'phone' && renderPhoneStep()}
+        {currentStep === 'otp' && renderOTPStep()}
+        {currentStep === 'register' && renderRegisterStep()}
+
+        {currentStep === 'phone' && (
+          <div className="text-center mt-6 pt-6 border-t">
+            <Link
+              to="/demo"
+              className="bg-yellow-500 text-white px-4 py-2 rounded text-sm flex items-center justify-center hover:bg-yellow-600 transition-colors"
+            >
+              <TestTube className="w-4 h-4 mr-2" />
+              ทดลองใช้โหมดDemo
+            </Link>
           </div>
-          
-          <div>
-            <input
-              type="password"
-              placeholder="รหัสผ่าน"
-              value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              className="form-input"
-              required
-            />
-          </div>
+        )}
 
-          {!isLogin && (
-            <>
-              <div>
-                <input
-                  type="text"
-                  placeholder="ชื่อ-นามสกุล"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="form-input"
-                  required
-                />
-              </div>
-              
-              <div>
-                <input
-                  type="tel"
-                  placeholder="เบอร์โทรศัพท์"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  className="form-input"
-                />
-              </div>
-
-              <div>
-                <select
-                  value={formData.role}
-                  onChange={(e) => setFormData({ ...formData, role: e.target.value as 'parent' | 'caretaker' })}
-                  className="form-input"
-                >
-                  <option value="parent">ผู้ปกครอง</option>
-                  <option value="caretaker">ผู้ดูแลเด็ก</option>
-                </select>
-              </div>
-
-              {formData.role === 'parent' && (
-                <>
-                  <div>
-                    <input
-                      type="text"
-                      placeholder="ชื่อลูก"
-                      value={formData.childName}
-                      onChange={(e) => setFormData({ ...formData, childName: e.target.value })}
-                      className="form-input"
-                    />
-                  </div>
-                  <div>
-                    <input
-                      type="number"
-                      placeholder="อายุลูก (ปี)"
-                      value={formData.childAge}
-                      onChange={(e) => setFormData({ ...formData, childAge: e.target.value })}
-                      className="form-input"
-                    />
-                  </div>
-                </>
-              )}
-            </>
-          )}
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full btn-primary disabled:opacity-50"
-          >
-            {loading ? 'กำลังดำเนินการ...' : (isLogin ? 'เข้าสู่ระบบ' : 'สมัครสมาชิก')}
-          </button>
-        </form>
-
-        <div className="text-center mt-4">
-          <button
-            onClick={() => {
-              setIsLogin(!isLogin)
-              setError('')
-            }}
-            className="text-blue-600 hover:text-blue-700 text-sm"
-          >
-            {isLogin ? 'ยังไม่มีบัญชี? สมัครเลย' : 'มีบัญชีแล้ว? เข้าสู่ระบบ'}
-          </button>
-        </div>
-
-        <div className="text-center mt-6 pt-6 border-t">
-          <Link
-            to="/demo"
-            className="bg-yellow-500 text-white px-4 py-2 rounded text-sm flex items-center justify-center hover:bg-yellow-600 transition-colors"
-          >
-            <TestTube className="w-4 h-4 mr-2" />
-            ทดลองใช้โหมดDemo
-          </Link>
-        </div>
+        {/* reCAPTCHA container */}
+        <div id="recaptcha-container"></div>
       </div>
     </div>
   )

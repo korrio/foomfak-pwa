@@ -1,20 +1,20 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { 
   User,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
-  updateProfile
+  updateProfile,
+  RecaptchaVerifier,
+  signInWithPhoneNumber,
+  ConfirmationResult
 } from 'firebase/auth'
 import { auth, db } from '../firebase/config'
 import { doc, setDoc, getDoc } from 'firebase/firestore'
 
 interface UserData {
   id: string
-  email: string
-  name: string
   phone: string
+  name: string
   role: 'parent' | 'caretaker' | 'admin'
   points: number
   level: number
@@ -30,11 +30,13 @@ interface UserData {
 interface AuthContextType {
   currentUser: User | null
   userData: UserData | null
-  login: (email: string, password: string) => Promise<void>
-  register: (userData: Partial<UserData> & { email: string; password: string }) => Promise<void>
+  sendOTP: (phoneNumber: string) => Promise<ConfirmationResult>
+  verifyOTP: (confirmationResult: ConfirmationResult, otp: string) => Promise<void>
+  registerWithPhone: (userData: Partial<UserData> & { phone: string }) => Promise<ConfirmationResult>
   logout: () => Promise<void>
   loading: boolean
   updateUserData: (data: Partial<UserData>) => Promise<void>
+  setupRecaptcha: (containerId: string) => RecaptchaVerifier
 }
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType)
@@ -56,13 +58,43 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [userData, setUserData] = useState<UserData | null>(null)
   const [loading, setLoading] = useState(true)
 
-  const register = async (formData: Partial<UserData> & { email: string; password: string }) => {
-    const { email, password, ...userData } = formData
-    
-    // Create auth user
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password)
-    const user = userCredential.user
+  const setupRecaptcha = (containerId: string): RecaptchaVerifier => {
+    return new RecaptchaVerifier(auth, containerId, {
+      size: 'invisible',
+      callback: () => {
+        console.log('reCAPTCHA solved')
+      }
+    })
+  }
 
+  const sendOTP = async (phoneNumber: string): Promise<ConfirmationResult> => {
+    const recaptchaVerifier = setupRecaptcha('recaptcha-container')
+    const formattedPhoneNumber = phoneNumber.startsWith('+') ? phoneNumber : `+66${phoneNumber.substring(1)}`
+    
+    try {
+      const confirmationResult = await signInWithPhoneNumber(auth, formattedPhoneNumber, recaptchaVerifier)
+      return confirmationResult
+    } catch (error) {
+      recaptchaVerifier.clear()
+      throw error
+    }
+  }
+
+  const verifyOTP = async (confirmationResult: ConfirmationResult, otp: string): Promise<void> => {
+    await confirmationResult.confirm(otp)
+  }
+
+  const registerWithPhone = async (userData: Partial<UserData> & { phone: string }): Promise<ConfirmationResult> => {
+    // First, send OTP for phone verification
+    const confirmationResult = await sendOTP(userData.phone)
+    
+    // Store temporary user data for after OTP verification
+    sessionStorage.setItem('pendingUserData', JSON.stringify(userData))
+    
+    return confirmationResult
+  }
+
+  const createUserDocument = async (user: User, userData: Partial<UserData>) => {
     // Update display name
     if (userData.name) {
       await updateProfile(user, { displayName: userData.name })
@@ -71,9 +103,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Create user document in Firestore
     const userDocData: UserData = {
       id: user.uid,
-      email: user.email!,
+      phone: userData.phone || user.phoneNumber || '',
       name: userData.name || '',
-      phone: userData.phone || '',
       role: userData.role || 'parent',
       points: 0,
       level: 1,
@@ -88,10 +119,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     await setDoc(doc(db, 'users', user.uid), userDocData)
     setUserData(userDocData)
-  }
-
-  const login = async (email: string, password: string) => {
-    await signInWithEmailAndPassword(auth, email, password)
   }
 
   const logout = async () => {
@@ -123,7 +150,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setCurrentUser(user)
       if (user) {
-        await fetchUserData(user)
+        // Check if this is a new user (just registered)
+        const pendingUserData = sessionStorage.getItem('pendingUserData')
+        if (pendingUserData) {
+          const userData = JSON.parse(pendingUserData)
+          await createUserDocument(user, userData)
+          sessionStorage.removeItem('pendingUserData')
+        } else {
+          await fetchUserData(user)
+        }
       } else {
         setUserData(null)
       }
@@ -136,11 +171,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const value: AuthContextType = {
     currentUser,
     userData,
-    login,
-    register,
+    sendOTP,
+    verifyOTP,
+    registerWithPhone,
     logout,
     loading,
-    updateUserData
+    updateUserData,
+    setupRecaptcha
   }
 
   return (

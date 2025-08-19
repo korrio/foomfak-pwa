@@ -33,8 +33,11 @@
 
 ### 1. Authentication
 - Go to Firebase Console → Authentication
-- Enable **Email/Password** provider
-- (Optional) Enable **Google** provider
+- Enable **Phone** provider
+  - Make sure to add your domain to authorized domains
+  - For development: `localhost` and `127.0.0.1`
+  - For production: your actual domain
+- (Optional) Enable **Google** provider for additional login methods
 
 ### 2. Firestore Database
 - Create Firestore database in production mode
@@ -109,9 +112,8 @@ The app uses these Firestore collections:
 ```javascript
 {
   id: string,
-  email: string,
-  name: string,
   phone: string,
+  name: string,
   role: 'parent' | 'caretaker' | 'admin',
   points: number,
   level: number,
