@@ -19,6 +19,14 @@ const app = initializeApp(firebaseConfig)
 
 export const db = getFirestore(app)
 export const auth = getAuth(app)
+
+// Configure for development environment
+if (typeof window !== 'undefined' && import.meta.env.DEV) {
+  // Enable test phone numbers in development
+  console.log('Development mode: Test phone numbers enabled')
+  auth.useDeviceLanguage()
+}
+
 export const storage = getStorage(app)
 
 export let messaging: any = null

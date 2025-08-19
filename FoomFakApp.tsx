@@ -387,9 +387,28 @@ useQuota: (userId: number, amount: number, storeId: number) => {
               ยกเลิก
             </button>
           </div>
-          <div className="mt-4 text-sm text-gray-600">
-            <p>ทดลองใช้ (พ่อแม่): parent@example.com / password</p>
-            <p>ทดลองใช้ (ผู้ดูแล): caregiver@example.com / password</p>
+          <div className="mt-4">
+            <p className="text-sm text-gray-600 mb-2">ทดลองใช้งาน:</p>
+            <div className="space-y-2">
+              <button
+                onClick={() => {
+                  setEmail('parent@example.com');
+                  setPassword('password');
+                }}
+                className="w-full bg-pink-100 text-pink-800 p-2 rounded text-sm hover:bg-pink-200 transition-colors"
+              >
+                👶 ผู้ปกครอง (พ่อแม่)
+              </button>
+              <button
+                onClick={() => {
+                  setEmail('caregiver@example.com');
+                  setPassword('password');
+                }}
+                className="w-full bg-green-100 text-green-800 p-2 rounded text-sm hover:bg-green-200 transition-colors"
+              >
+                👵 ผู้ดูแลเด็ก (ยายข้างบ้าน)
+              </button>
+            </div>
           </div>
         </div>
       </div>

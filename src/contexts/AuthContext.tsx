@@ -6,10 +6,21 @@ import {
   updateProfile,
   RecaptchaVerifier,
   signInWithPhoneNumber,
-  ConfirmationResult
+  ConfirmationResult,
+  signInAnonymously,
+  signInWithPopup,
+  GoogleAuthProvider
 } from 'firebase/auth'
 import { auth, db } from '../firebase/config'
 import { doc, setDoc, getDoc } from 'firebase/firestore'
+
+// Test phone numbers for development (no SMS sent, no reCAPTCHA required)
+const TEST_PHONE_NUMBERS = {
+  '+66812345678': '123456',
+  '+66887654321': '654321',
+  '+66811111111': '111111',
+  '+66826539264': '111111'
+}
 
 interface UserData {
   id: string
@@ -33,6 +44,8 @@ interface AuthContextType {
   sendOTP: (phoneNumber: string) => Promise<ConfirmationResult>
   verifyOTP: (confirmationResult: ConfirmationResult, otp: string) => Promise<void>
   registerWithPhone: (userData: Partial<UserData> & { phone: string }) => Promise<ConfirmationResult>
+  signInWithGoogle: () => Promise<void>
+  signInAsGuest: () => Promise<void>
   logout: () => Promise<void>
   loading: boolean
   updateUserData: (data: Partial<UserData>) => Promise<void>
@@ -59,23 +72,53 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState(true)
 
   const setupRecaptcha = (containerId: string): RecaptchaVerifier => {
+    // Clear any existing reCAPTCHA
+    const container = document.getElementById(containerId)
+    if (container) {
+      container.innerHTML = ''
+    }
+    
     return new RecaptchaVerifier(auth, containerId, {
-      size: 'invisible',
-      callback: () => {
-        console.log('reCAPTCHA solved')
+      size: 'normal',
+      callback: (response: any) => {
+        console.log('reCAPTCHA solved:', response)
+      },
+      'expired-callback': () => {
+        console.log('reCAPTCHA expired - please refresh')
+      },
+      'error-callback': (error: any) => {
+        console.error('reCAPTCHA error:', error)
       }
     })
   }
 
   const sendOTP = async (phoneNumber: string): Promise<ConfirmationResult> => {
-    const recaptchaVerifier = setupRecaptcha('recaptcha-container')
     const formattedPhoneNumber = phoneNumber.startsWith('+') ? phoneNumber : `+66${phoneNumber.substring(1)}`
     
+    console.log('Attempting to send OTP to:', formattedPhoneNumber)
+    
+    // Check if it's a test phone number
+    if (TEST_PHONE_NUMBERS[formattedPhoneNumber as keyof typeof TEST_PHONE_NUMBERS]) {
+      console.log('Using test phone number - no SMS will be sent')
+    }
+    
     try {
+      const recaptchaVerifier = setupRecaptcha('recaptcha-container')
+      
       const confirmationResult = await signInWithPhoneNumber(auth, formattedPhoneNumber, recaptchaVerifier)
+      console.log('OTP request successful')
       return confirmationResult
-    } catch (error) {
-      recaptchaVerifier.clear()
+    } catch (error: any) {
+      console.error('Failed to send OTP:', error)
+      console.error('Error code:', error.code)
+      console.error('Error message:', error.message)
+      
+      // Clean up reCAPTCHA on error
+      const container = document.getElementById('recaptcha-container')
+      if (container) {
+        container.innerHTML = ''
+      }
+      
       throw error
     }
   }
@@ -92,6 +135,62 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     sessionStorage.setItem('pendingUserData', JSON.stringify(userData))
     
     return confirmationResult
+  }
+
+  const signInWithGoogle = async (): Promise<void> => {
+    try {
+      const provider = new GoogleAuthProvider()
+      provider.addScope('email')
+      provider.addScope('profile')
+      
+      const result = await signInWithPopup(auth, provider)
+      const user = result.user
+      
+      // Check if user already exists in our database
+      const userDoc = await getDoc(doc(db, 'users', user.uid))
+      
+      if (!userDoc.exists()) {
+        // Create new user document for Google sign-in (with minimal data - onboarding will complete it)
+        const userData: Partial<UserData> = {
+          name: user.displayName || 'ผู้ใช้ Google',
+          phone: user.phoneNumber || user.email || '',
+          role: 'parent', // Default role, user can change during onboarding
+          points: 0, // Will be updated to 100 during onboarding
+          level: 1,
+          streak: 0
+        }
+        
+        await createUserDocument(user, userData)
+      }
+      
+      console.log('Google sign-in successful')
+    } catch (error: any) {
+      console.error('Google sign-in failed:', error)
+      throw new Error('ไม่สามารถเข้าสู่ระบบด้วย Google ได้: ' + error.message)
+    }
+  }
+
+  const signInAsGuest = async (): Promise<void> => {
+    try {
+      const result = await signInAnonymously(auth)
+      const user = result.user
+      
+      // Create guest user document
+      const userData: Partial<UserData> = {
+        name: 'ผู้ใช้แขก',
+        phone: '',
+        role: 'parent',
+        points: 0,
+        level: 1,
+        streak: 0
+      }
+      
+      await createUserDocument(user, userData)
+      console.log('Anonymous sign-in successful')
+    } catch (error: any) {
+      console.error('Anonymous sign-in failed:', error)
+      throw new Error('ไม่สามารถเข้าสู่ระบบแบบแขกได้: ' + error.message)
+    }
   }
 
   const createUserDocument = async (user: User, userData: Partial<UserData>) => {
@@ -174,6 +273,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     sendOTP,
     verifyOTP,
     registerWithPhone,
+    signInWithGoogle,
+    signInAsGuest,
     logout,
     loading,
     updateUserData,
