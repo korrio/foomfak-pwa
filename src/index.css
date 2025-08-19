@@ -1,0 +1,45 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply box-border;
+  }
+  
+  html {
+    @apply h-full;
+  }
+  
+  body {
+    @apply h-full m-0 p-0 font-sans antialiased;
+    font-family: 'Noto Sans Thai', system-ui, -apple-system, sans-serif;
+  }
+  
+  #root {
+    @apply h-full w-full;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 px-6 rounded-lg transition-colors;
+  }
+
+  .btn-secondary {
+    @apply bg-pink-500 hover:bg-pink-600 text-white font-medium py-3 px-6 rounded-lg transition-colors;
+  }
+
+  .btn-success {
+    @apply bg-green-500 hover:bg-green-600 text-white font-medium py-3 px-6 rounded-lg transition-colors;
+  }
+
+  .card {
+    @apply bg-white rounded-lg shadow-md p-4;
+  }
+
+  .form-input {
+    @apply w-full p-3 border border-gray-300 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-colors;
+  }
+}

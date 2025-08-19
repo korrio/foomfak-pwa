@@ -1,0 +1,42 @@
+{
+  "name": "foomfak-app",
+  "version": "1.0.0",
+  "description": "Parenting activity tracker PWA for teenage parents",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint . --ext .ts,.tsx",
+    "type-check": "tsc --noEmit"
+  },
+  "keywords": ["pwa", "parenting", "mobile", "react", "typescript"],
+  "author": "FoomFak Team",
+  "license": "MIT",
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "firebase": "^10.7.1",
+    "lucide-react": "^0.298.0",
+    "react-router-dom": "^6.20.1",
+    "workbox-window": "^7.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.43",
+    "@types/react-dom": "^18.2.17",
+    "@typescript-eslint/eslint-plugin": "^6.14.0",
+    "@typescript-eslint/parser": "^6.14.0",
+    "@vitejs/plugin-react": "^4.2.1",
+    "autoprefixer": "^10.4.16",
+    "eslint": "^8.55.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-refresh": "^0.4.5",
+    "postcss": "^8.4.32",
+    "tailwindcss": "^3.3.6",
+    "typescript": "^5.2.2",
+    "vite": "^5.0.8",
+    "vite-plugin-pwa": "^0.17.4",
+    "workbox-build": "^7.0.0"
+  }
+}

@@ -1,0 +1,52 @@
+{
+  "name": "ฟูมฟัก - Parenting Activity Tracker",
+  "short_name": "ฟูมฟัก",
+  "description": "Gamified parenting activity tracker for teenage parents",
+  "icons": [
+    {
+      "src": "/pwa-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "theme_color": "#2563eb",
+  "background_color": "#ffffff",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "start_url": "/",
+  "categories": ["parenting", "family", "lifestyle"],
+  "shortcuts": [
+    {
+      "name": "Record Activity",
+      "short_name": "Record",
+      "description": "Quickly record a parenting activity",
+      "url": "/record",
+      "icons": [
+        {
+          "src": "/pwa-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "View Points",
+      "short_name": "Points",
+      "description": "Check your points and rewards",
+      "url": "/points",
+      "icons": [
+        {
+          "src": "/pwa-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ]
+}
