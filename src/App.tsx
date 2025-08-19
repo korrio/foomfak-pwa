@@ -1,12 +1,22 @@
 import React from 'react'
-import FoomFakApp from '../FoomFakApp.tsx'
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import { AuthProvider } from './contexts/AuthContext'
+import HomePage from './pages/HomePage'
+import DemoPage from './pages/DemoPage'
 import './App.css'
 
 function App() {
   return (
-    <div className="App">
-      <FoomFakApp />
-    </div>
+    <AuthProvider>
+      <Router>
+        <div className="App">
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/demo" element={<DemoPage />} />
+          </Routes>
+        </div>
+      </Router>
+    </AuthProvider>
   )
 }
 

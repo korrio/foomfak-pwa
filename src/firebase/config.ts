@@ -3,6 +3,7 @@ import { getFirestore } from 'firebase/firestore'
 import { getAuth } from 'firebase/auth'
 import { getStorage } from 'firebase/storage'
 import { getMessaging, isSupported } from 'firebase/messaging'
+import { getAnalytics } from 'firebase/analytics'
 
 const firebaseConfig = {
   apiKey: process.env.VITE_FIREBASE_API_KEY || "your-api-key",
@@ -21,12 +22,17 @@ export const auth = getAuth(app)
 export const storage = getStorage(app)
 
 export let messaging: any = null
+export let analytics: any = null
+
 if (typeof window !== 'undefined') {
   isSupported().then((supported) => {
     if (supported) {
       messaging = getMessaging(app)
     }
   })
+  
+  // Initialize Analytics
+  analytics = getAnalytics(app)
 }
 
 export default app

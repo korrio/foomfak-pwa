@@ -9,7 +9,11 @@
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint . --ext .ts,.tsx",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "firebase:emulators": "firebase emulators:start",
+    "firebase:deploy": "npm run build && firebase deploy",
+    "firebase:deploy:hosting": "npm run build && firebase deploy --only hosting",
+    "firebase:deploy:rules": "firebase deploy --only firestore:rules,storage"
   },
   "keywords": ["pwa", "parenting", "mobile", "react", "typescript"],
   "author": "FoomFak Team",
