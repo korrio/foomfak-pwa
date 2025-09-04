@@ -32,18 +32,28 @@ export const activityService = {
     const template = activityTemplates.find(t => t.id === activityId)
     if (!template) return 0
 
-    // Special point calculation rules
+    // Official point calculation rules (แรกเกิด – 6 ขวบ)
     switch (activityId) {
-      case 'reading_story': // 1 point per minute, max 15 per day
+      case 'reading_story': // อ่านนิทานให้ลูกฟัง
+        // อ่านอย่างน้อย 5 นาที นาทีละ 1 คะแนน
+        // วันละไม่เกิน 15 นาที (15 คะแนน)
+        if (durationInSeconds < 5 * 60) return 0 // ต้องอ่านอย่างน้อย 5 นาที
         const readingMinutes = Math.floor(durationInSeconds / 60)
         return Math.min(readingMinutes, 15)
       
-      case 'playing_together': // 1 point per minute, max 15 per day  
+      case 'hugging': // กอดลูกอย่างน้อย 5 วินาที
+        // อย่างน้อย 2 ครั้ง/วัน = 5 คะแนน (นับแต้มวันละ 1 ครั้ง)
+        if (durationInSeconds < 5) return 0 // ต้องกอดอย่างน้อย 5 วินาที
+        return 5 // ได้ 5 คะแนนเต็ม (วันละครั้ง)
+      
+      case 'playing_together': // เล่นกับลูก/วาดรูป/ระบายสีกับลูก
+      case 'drawing': 
+      case 'coloring':
+        // อย่างน้อย 5 นาที นาทีละ 1 คะแนน
+        // วันละไม่เกิน 15 นาที (15 คะแนน)
+        if (durationInSeconds < 5 * 60) return 0 // ต้องทำอย่างน้อย 5 นาที
         const playingMinutes = Math.floor(durationInSeconds / 60)
         return Math.min(playingMinutes, 15)
-      
-      case 'hugging': // 5 points per day (counted once daily)
-        return 5
       
       default: // For other activities, use template points
         return template.points
@@ -131,11 +141,63 @@ export const activityService = {
     return downloadURL
   },
 
+  // Upload multiple files (photos/videos)
+  async uploadMultipleFiles(files: File[], userId: string, activityId: string): Promise<string[]> {
+    const uploadPromises = files.map(async (file, index) => {
+      const fileExtension = file.name.split('.').pop() || 'jpg'
+      const fileName = `activities/${userId}/${activityId}_${index}.${fileExtension}`
+      const storageRef = ref(storage, fileName)
+      
+      const snapshot = await uploadBytes(storageRef, file)
+      const downloadURL = await getDownloadURL(snapshot.ref)
+      return downloadURL
+    })
+
+    try {
+      const urls = await Promise.all(uploadPromises)
+      return urls
+    } catch (error) {
+      console.error('Failed to upload some files:', error)
+      // Try to upload individually and return successful ones
+      const results: string[] = []
+      for (let i = 0; i < files.length; i++) {
+        try {
+          const file = files[i]
+          const fileExtension = file.name.split('.').pop() || 'jpg'
+          const fileName = `activities/${userId}/${activityId}_${i}.${fileExtension}`
+          const storageRef = ref(storage, fileName)
+          
+          const snapshot = await uploadBytes(storageRef, file)
+          const downloadURL = await getDownloadURL(snapshot.ref)
+          results.push(downloadURL)
+        } catch (fileError) {
+          console.error(`Failed to upload file ${files[i].name}:`, fileError)
+        }
+      }
+      return results
+    }
+  },
+
   // Update activity with media URL
   async updateActivityMedia(activityId: string, mediaUrl: string): Promise<void> {
     await updateDoc(doc(db, 'activities', activityId), {
       mediaUrl
     })
+  },
+
+  // Update activity with multiple media URLs
+  async updateActivityMultipleMedia(activityId: string, mediaUrls: string[], recordedMediaUrl?: string): Promise<void> {
+    const updateData: any = {}
+    
+    if (recordedMediaUrl) {
+      updateData.mediaUrl = recordedMediaUrl
+    }
+    
+    if (mediaUrls.length > 0) {
+      updateData.uploadedFiles = mediaUrls
+    }
+
+    await updateDoc(doc(db, 'activities', activityId), updateData)
   },
 
   // Complete activity with media
@@ -163,6 +225,50 @@ export const activityService = {
       id: activityId,
       ...activityData,
       mediaUrl,
+      timestamp: new Date()
+    } as Activity
+  },
+
+  // Complete activity with media and uploaded files
+  async completeActivityWithFiles(
+    activityData: ActivityData, 
+    mediaFile?: Blob,
+    uploadedFiles?: File[]
+  ): Promise<Activity> {
+    // Create activity first
+    const activityId = await this.createActivity(activityData)
+    
+    let mediaUrl: string | undefined
+    let uploadedFileUrls: string[] = []
+    
+    // Upload recorded media if provided
+    if (mediaFile) {
+      try {
+        mediaUrl = await this.uploadMedia(mediaFile, activityData.userId, activityId)
+      } catch (error) {
+        console.error('Failed to upload recorded media:', error)
+      }
+    }
+
+    // Upload additional files if provided
+    if (uploadedFiles && uploadedFiles.length > 0) {
+      try {
+        uploadedFileUrls = await this.uploadMultipleFiles(uploadedFiles, activityData.userId, activityId)
+      } catch (error) {
+        console.error('Failed to upload files:', error)
+      }
+    }
+
+    // Update activity with all media URLs
+    if (mediaUrl || uploadedFileUrls.length > 0) {
+      await this.updateActivityMultipleMedia(activityId, uploadedFileUrls, mediaUrl)
+    }
+
+    return {
+      id: activityId,
+      ...activityData,
+      mediaUrl,
+      uploadedFiles: uploadedFileUrls,
       timestamp: new Date()
     } as Activity
   }

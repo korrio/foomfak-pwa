@@ -61,5 +61,11 @@ service cloud.firestore {
       allow read, write: if request.auth != null && 
         (request.auth.uid == resource.data.userId || request.auth.uid == request.resource.data.userId);
     }
+    
+    // EQ Assessments - users can read and write their own
+    match /eqAssessments/{assessmentId} {
+      allow read, write: if request.auth != null && 
+        (request.auth.uid == resource.data.userId || request.auth.uid == request.resource.data.userId);
+    }
   }
 }

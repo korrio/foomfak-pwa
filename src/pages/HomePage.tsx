@@ -11,6 +11,10 @@ import { activityTemplates } from '../data/activities'
 import { RewardsMarketplace } from '../components/RewardsMarketplace'
 import { OnboardingModal } from '../components/OnboardingModal'
 import { AddToHomeScreen } from '../components/AddToHomeScreen'
+import { BottomNavigation } from '../components/BottomNavigation'
+import { EQAssessment } from '../components/EQAssessment'
+import { AssessmentDashboard } from '../components/AssessmentDashboard'
+import InstallPWA from '../components/InstallPWA'
 import { 
   Play, 
   User, 
@@ -27,14 +31,19 @@ import {
   Calendar,
   TrendingUp,
   Target,
-  Gift
+  Gift,
+  Download
 } from 'lucide-react'
 
 const HomePage: React.FC = () => {
   const { currentUser, userData, logout, loading, updateUserData } = useAuth()
+  const [activeTab, setActiveTab] = useState<'home' | 'record' | 'rewards' | 'assessment'>('home')
   const [showActivityRecorder, setShowActivityRecorder] = useState(false)
   const [showRewardsMarketplace, setShowRewardsMarketplace] = useState(false)
   const [showOnboarding, setShowOnboarding] = useState(false)
+  const [showEQAssessment, setShowEQAssessment] = useState(false)
+  const [showAssessmentDashboard, setShowAssessmentDashboard] = useState(false)
+  const [assessmentType, setAssessmentType] = useState<'pre-test' | 'post-test'>('pre-test')
   const [activities, setActivities] = useState<Activity[]>([])
   const [challenges, setChallenges] = useState<(Challenge & { currentValue?: number })[]>([])
   const [achievements, setAchievements] = useState<Achievement[]>([])
@@ -54,12 +63,15 @@ const HomePage: React.FC = () => {
   // Check if user needs onboarding
   useEffect(() => {
     if (currentUser && userData) {
-      // Show onboarding if user is new (has default values) and signed in via Google or Anonymous
+      // Show onboarding if user is new and signed in via Google or Anonymous
       const isGoogleUser = currentUser.providerData.some(provider => provider.providerId === 'google.com')
       const isAnonymousUser = currentUser.isAnonymous
-      const isNewUser = userData.points === 0 && userData.level === 1 && userData.streak === 0
-      const needsOnboarding = (isGoogleUser || isAnonymousUser) && isNewUser && 
-        (!userData.name || userData.name === 'ผู้ใช้ Google' || userData.name === 'ผู้ใช้แขก')
+      
+      // Check if onboarding has been completed (we'll use a flag in userData or check if child profile exists)
+      const hasCompletedOnboarding = userData.onboardingCompleted || 
+        (userData.childName && userData.childName.length > 0)
+      
+      const needsOnboarding = (isGoogleUser || isAnonymousUser) && !hasCompletedOnboarding
       
       if (needsOnboarding) {
         setShowOnboarding(true)
@@ -141,8 +153,8 @@ const HomePage: React.FC = () => {
     if (!currentUser || !userData) return
 
     try {
-      // Save activity to Firestore
-      const activity = await activityService.completeActivityWithMedia({
+      // Save activity to Firestore with both recorded media and uploaded files
+      const activity = await activityService.completeActivityWithFiles({
         userId: currentUser.uid,
         type: activityData.type,
         title: activityData.name,
@@ -150,7 +162,7 @@ const HomePage: React.FC = () => {
         duration: activityData.duration,
         points: activityData.points,
         status: 'completed'
-      }, activityData.blob)
+      }, activityData.blob, activityData.uploadedFiles)
 
       // Process challenges and achievements
       const { completedChallenges, newAchievements } = await challengeService.processActivity(
@@ -206,10 +218,56 @@ const HomePage: React.FC = () => {
     }
   }
 
+  const handleTabChange = (tab: 'home' | 'record' | 'rewards' | 'assessment') => {
+    setActiveTab(tab)
+    
+    // Handle navigation actions
+    switch (tab) {
+      case 'record':
+        setShowActivityRecorder(true)
+        setActiveTab('home') // Reset to home after opening modal
+        break
+      case 'rewards':
+        setShowRewardsMarketplace(true)
+        setActiveTab('home') // Reset to home after opening modal
+        break
+      case 'assessment':
+        setShowAssessmentDashboard(true)
+        setActiveTab('home') // Reset to home after opening modal
+        break
+      case 'home':
+      default:
+        // Already on home, do nothing
+        break
+    }
+  }
+
+  const handleStartAssessment = (type: 'pre-test' | 'post-test') => {
+    setAssessmentType(type)
+    setShowAssessmentDashboard(false)
+    setShowEQAssessment(true)
+  }
+
+  const handleEQAssessmentComplete = (assessment: any) => {
+    showNotification(`ทำแบบประเมิน ${assessment.type === 'pre-test' ? 'ก่อนใช้แอป' : 'หลังใช้แอป'} เสร็จเรียบร้อยแล้ว!`)
+    setShowEQAssessment(false)
+  }
+
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
+      <div className="min-h-screen w-full bg-[#fafafa] relative text-gray-900 flex items-center justify-center">
+        {/* Diagonal Grid with Electric Orange */}
+        <div
+          className="absolute inset-0 z-0 pointer-events-none"
+          style={{
+            backgroundImage: `
+              repeating-linear-gradient(45deg, rgba(255, 0, 100, 0.1) 0, rgba(255, 0, 100, 0.1) 1px, transparent 1px, transparent 20px),
+            repeating-linear-gradient(-45deg, rgba(255, 0, 100, 0.1) 0, rgba(255, 0, 100, 0.1) 1px, transparent 1px, transparent 20px)
+            `,
+            backgroundSize: "40px 40px",
+          }}
+        />
+        <div className="relative z-10 text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
           <p className="text-gray-600">กำลังโหลด...</p>
         </div>
@@ -222,22 +280,41 @@ const HomePage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen w-full bg-[#fafafa] relative text-gray-900">
+      {/* Diagonal Grid with Electric Orange */}
+      <div
+        className="absolute inset-0 z-0 pointer-events-none"
+        style={{
+          backgroundImage: `
+            repeating-linear-gradient(45deg, rgba(255, 0, 100, 0.1) 0, rgba(255, 0, 100, 0.1) 1px, transparent 1px, transparent 20px),
+          repeating-linear-gradient(-45deg, rgba(255, 0, 100, 0.1) 0, rgba(255, 0, 100, 0.1) 1px, transparent 1px, transparent 20px)
+          `,
+          backgroundSize: "40px 40px",
+        }}
+      />
+      <div className="relative z-10">
       {/* Header */}
       <div className="bg-white shadow-sm p-4">
         <div className="max-w-md mx-auto flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-bold text-blue-600">ฟูมฟัก</h1>
-            <p className="text-xs text-gray-500">เชื่อมต่อ Firebase</p>
+          <div className="flex items-center">
+            <img 
+              src="/logo.png" 
+              alt="ฟูมฟัก" 
+              className="w-10 h-10 rounded-full border-2 border-blue-100 mr-3"
+            />
+            <div>
+              <h1 className="text-2xl font-bold text-blue-600">ฟูมฟัก</h1>
+              <p className="text-xs text-gray-500">เชื่อมต่อ Firebase</p>
+            </div>
           </div>
           <div className="flex items-center space-x-3">
-            <Link
-              to="/demo"
-              className="bg-yellow-500 text-white px-3 py-1 rounded text-sm flex items-center"
+            <button
+              onClick={() => setShowOnboarding(true)}
+              className="bg-blue-500 text-white px-3 py-1 rounded text-sm flex items-center"
             >
-              <TestTube className="w-4 h-4 mr-1" />
-              ทดสอบ
-            </Link>
+              <User className="w-4 h-4 mr-1" />
+              ประวัติลูกน้อย
+            </button>
             <button
               onClick={handleLogout}
               className="text-gray-500 hover:text-gray-700"
@@ -256,7 +333,7 @@ const HomePage: React.FC = () => {
       )}
 
       {/* Main Content */}
-      <div className="max-w-md mx-auto p-4 space-y-6">
+      <div className="max-w-md mx-auto p-4 space-y-6 pb-20">
         {/* User Stats */}
         <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-6 rounded-lg">
           <h2 className="text-xl font-bold mb-2">สวัสดี {userData?.name}</h2>
@@ -283,20 +360,6 @@ const HomePage: React.FC = () => {
           </button>
         </div>
 
-        {/* Main Action */}
-        <div className="bg-gradient-to-r from-pink-500 to-purple-600 text-white rounded-lg p-6">
-          <h3 className="font-bold text-lg mb-2">บันทึกกิจกรรมลูก</h3>
-          <p className="text-sm mb-4 opacity-90">
-            บันทึกกิจกรรมการดูแลลูกและรับแต้มสะสม
-          </p>
-          <button
-            onClick={() => setShowActivityRecorder(true)}
-            className="bg-white text-pink-600 px-6 py-3 rounded-lg font-semibold flex items-center hover:bg-pink-50 transition-colors"
-          >
-            <Plus className="w-5 h-5 mr-2" />
-            เริ่มบันทึกกิจกรรม
-          </button>
-        </div>
 
         {/* Popular Activities */}
         <div className="bg-white rounded-lg shadow-md p-4">
@@ -492,8 +555,18 @@ const HomePage: React.FC = () => {
       {/* Onboarding Modal */}
       {showOnboarding && (
         <OnboardingModal
-          onComplete={() => {
+          onComplete={async () => {
             setShowOnboarding(false)
+            
+            // Mark onboarding as completed and give welcome bonus
+            if (currentUser && userData) {
+              await updateUserData({
+                onboardingCompleted: true,
+                points: userData.points + 100, // Welcome bonus
+                lastActive: new Date()
+              })
+            }
+            
             showNotification('ยินดีต้อนรับสู่ฟูมฟัก! คุณได้รับโบนัสต้อนรับ 100 แต้ม 🎉')
           }}
         />
@@ -501,247 +574,68 @@ const HomePage: React.FC = () => {
 
       {/* Add to Home Screen Prompt */}
       <AddToHomeScreen />
+
+      {/* Bottom Navigation */}
+      <BottomNavigation 
+        activeTab={activeTab}
+        onTabChange={handleTabChange}
+      />
+
+      {/* Assessment Dashboard Modal */}
+      {showAssessmentDashboard && (
+        <AssessmentDashboard
+          onStartAssessment={handleStartAssessment}
+          onClose={() => setShowAssessmentDashboard(false)}
+        />
+      )}
+
+      {/* EQ Assessment Modal */}
+      {showEQAssessment && (
+        <EQAssessment
+          type={assessmentType}
+          onComplete={handleEQAssessmentComplete}
+          onClose={() => setShowEQAssessment(false)}
+        />
+      )}
+      </div>
     </div>
   )
 }
 
 // Auth Screen Component
 const AuthScreen: React.FC = () => {
-  const { sendOTP, verifyOTP, registerWithPhone, signInWithGoogle, signInAsGuest, setupRecaptcha } = useAuth()
-  const [currentStep, setCurrentStep] = useState<'phone' | 'otp' | 'register'>('phone')
+  const { signInWithGoogle, signInAsGuest } = useAuth()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [confirmationResult, setConfirmationResult] = useState<any>(null)
-  const [isNewUser, setIsNewUser] = useState(false)
-  const [formData, setFormData] = useState({
-    phone: '',
-    otp: '',
-    name: '',
-    role: 'parent' as 'parent' | 'caretaker',
-    childName: '',
-    childAge: ''
-  })
 
-  const handlePhoneSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setError('')
-
-    try {
-      const result = await sendOTP(formData.phone)
-      setConfirmationResult(result)
-      setCurrentStep('otp')
-    } catch (error: any) {
-      console.error('Phone auth error:', error)
-      
-      let errorMessage = 'ไม่สามารถส่ง OTP ได้: '
-      
-      switch (error.code) {
-        case 'auth/invalid-app-credential':
-          errorMessage += 'กรุณาตรวจสอบการตั้งค่า Firebase (Phone Auth ต้องถูกเปิดใช้งานใน Firebase Console)'
-          break
-        case 'auth/user-not-found':
-          setIsNewUser(true)
-          setCurrentStep('register')
-          return
-        case 'auth/invalid-phone-number':
-          errorMessage += 'หมายเลขโทรศัพท์ไม่ถูกต้อง'
-          break
-        case 'auth/too-many-requests':
-          errorMessage += 'มีการร้องขอมากเกินไป กรุณารอสักครู่'
-          break
-        case 'auth/captcha-check-failed':
-          errorMessage += 'การยืนยัน reCAPTCHA ล้มเหลว'
-          break
-        default:
-          errorMessage += error.message || 'กรุณาลองใหม่อีกครั้ง'
-      }
-      
-      setError(errorMessage)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleOTPVerify = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setError('')
-
-    try {
-      await verifyOTP(confirmationResult, formData.otp)
-      // Auth state change will handle navigation automatically
-    } catch (error: any) {
-      setError('รหัส OTP ไม่ถูกต้อง')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setError('')
-
-    try {
-      const result = await registerWithPhone({
-        ...formData,
-        childAge: formData.childAge ? parseInt(formData.childAge) : undefined
-      })
-      setConfirmationResult(result)
-      setCurrentStep('otp')
-    } catch (error: any) {
-      setError('ไม่สามารถสมัครสมาชิกได้: ' + (error.message || 'กรุณาลองใหม่'))
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const renderPhoneStep = () => (
-    <form onSubmit={handlePhoneSubmit} className="space-y-4">
-      <div>
-        <input
-          type="tel"
-          placeholder="หมายเลขโทรศัพท์ (08xxxxxxxx)"
-          value={formData.phone}
-          onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-          className="form-input"
-          required
-          maxLength={10}
-        />
-        <p className="text-xs text-gray-500 mt-1">ใส่เบอร์โทรศัพท์เพื่อรับรหัส OTP</p>
-        <div className="mt-2 p-2 bg-blue-50 rounded border">
-          <p className="text-xs font-medium text-blue-800 mb-1">เบอร์ทดสอบ (ไม่ต้องรับ SMS):</p>
-          <div className="text-xs text-blue-700 space-y-1">
-            <div>0812345678 → OTP: 123456</div>
-            <div>0887654321 → OTP: 654321</div>
-            <div>0811111111 → OTP: 111111</div>
-            <div>0826539264 → OTP: 111111</div>
-          </div>
-        </div>
-      </div>
-
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full btn-primary disabled:opacity-50"
-      >
-        {loading ? 'กำลังส่ง OTP...' : 'ส่งรหัส OTP'}
-      </button>
-    </form>
-  )
-
-  const renderOTPStep = () => (
-    <form onSubmit={handleOTPVerify} className="space-y-4">
-      <div>
-        <input
-          type="text"
-          placeholder="รหัส OTP (6 หลัก)"
-          value={formData.otp}
-          onChange={(e) => setFormData({ ...formData, otp: e.target.value })}
-          className="form-input text-center text-lg tracking-widest"
-          required
-          maxLength={6}
-          autoComplete="one-time-code"
-        />
-        <p className="text-xs text-gray-500 mt-1 text-center">
-          ใส่รหัส OTP ที่ส่งไปยัง {formData.phone}
-        </p>
-      </div>
-
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full btn-primary disabled:opacity-50"
-      >
-        {loading ? 'กำลังยืนยัน...' : 'ยืนยันรหัส'}
-      </button>
-
-      <button
-        type="button"
-        onClick={() => setCurrentStep('phone')}
-        className="w-full text-gray-600 hover:text-gray-700 text-sm"
-      >
-        กลับไปแก้ไขเบอร์โทร
-      </button>
-    </form>
-  )
-
-  const renderRegisterStep = () => (
-    <form onSubmit={handleRegister} className="space-y-4">
-      <div>
-        <input
-          type="text"
-          placeholder="ชื่อ-นามสกุล"
-          value={formData.name}
-          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-          className="form-input"
-          required
-        />
-      </div>
-
-      <div>
-        <select
-          value={formData.role}
-          onChange={(e) => setFormData({ ...formData, role: e.target.value as 'parent' | 'caretaker' })}
-          className="form-input"
-        >
-          <option value="parent">ผู้ปกครอง</option>
-          <option value="caretaker">ผู้ดูแลเด็ก</option>
-        </select>
-      </div>
-
-      {formData.role === 'parent' && (
-        <>
-          <div>
-            <input
-              type="text"
-              placeholder="ชื่อลูก"
-              value={formData.childName}
-              onChange={(e) => setFormData({ ...formData, childName: e.target.value })}
-              className="form-input"
-            />
-          </div>
-          <div>
-            <input
-              type="number"
-              placeholder="อายุลูก (ปี)"
-              value={formData.childAge}
-              onChange={(e) => setFormData({ ...formData, childAge: e.target.value })}
-              className="form-input"
-            />
-          </div>
-        </>
-      )}
-
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full btn-primary disabled:opacity-50"
-      >
-        {loading ? 'กำลังสมัครสมาชิก...' : 'สมัครสมาชิก'}
-      </button>
-
-      <button
-        type="button"
-        onClick={() => setCurrentStep('phone')}
-        className="w-full text-gray-600 hover:text-gray-700 text-sm"
-      >
-        กลับไปแก้ไขเบอร์โทร
-      </button>
-    </form>
-  )
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
-        <div className="text-center mb-6">
+    <div className="min-h-screen w-full bg-[#fafafa] relative text-gray-900 flex items-center justify-center p-4">
+      {/* Diagonal Grid with Electric Orange */}
+      <div
+        className="absolute inset-0 z-0 pointer-events-none"
+        style={{
+          backgroundImage: `
+            repeating-linear-gradient(45deg, rgba(255, 0, 100, 0.1) 0, rgba(255, 0, 100, 0.1) 1px, transparent 1px, transparent 20px),
+          repeating-linear-gradient(-45deg, rgba(255, 0, 100, 0.1) 0, rgba(255, 0, 100, 0.1) 1px, transparent 1px, transparent 20px)
+          `,
+          backgroundSize: "40px 40px",
+        }}
+      />
+      <div className="relative z-10 w-full max-w-md">
+        <div className="bg-white rounded-lg shadow-xl p-6 w-full">
+        <div className="text-center mb-8">
+          {/* Logo */}
+          <div className="mb-4">
+            <img 
+              src="/logo.png" 
+              alt="ฟูมฟัก" 
+              className="w-20 h-20 mx-auto rounded-full border-4 border-blue-100"
+            />
+          </div>
           <h1 className="text-3xl font-bold text-blue-600 mb-2">ฟูมฟัก</h1>
-          <p className="text-gray-600">
-            {currentStep === 'phone' && 'เข้าสู่ระบบด้วยเบอร์โทร'}
-            {currentStep === 'otp' && 'ยืนยันรหัส OTP'}
-            {currentStep === 'register' && 'สมัครสมาชิกใหม่'}
-          </p>
+          <p className="text-gray-600">แอปพลิเคชันสำหรับผู้ปกครองวัยรุ่น</p>
+          <p className="text-sm text-gray-500 mt-1">เลือกวิธีการเข้าสู่ระบบ</p>
         </div>
 
         {error && (
@@ -750,77 +644,145 @@ const AuthScreen: React.FC = () => {
           </div>
         )}
 
-        {currentStep === 'phone' && renderPhoneStep()}
-        {currentStep === 'otp' && renderOTPStep()}
-        {currentStep === 'register' && renderRegisterStep()}
+        <div className="space-y-4">
+          <button
+            onClick={async () => {
+              setLoading(true)
+              setError('')
+              try {
+                await signInWithGoogle()
+              } catch (error: any) {
+                setError(error.message)
+              } finally {
+                setLoading(false)
+              }
+            }}
+            disabled={loading}
+            className="w-full bg-red-500 text-white px-4 py-3 rounded-lg flex items-center justify-center hover:bg-red-600 transition-colors disabled:opacity-50 font-medium"
+          >
+            <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24">
+              <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+              <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+            </svg>
+            เข้าสู่ระบบด้วย Google
+          </button>
+          
+          <button
+            onClick={async () => {
+              setLoading(true)
+              setError('')
+              try {
+                await signInAsGuest()
+              } catch (error: any) {
+                setError(error.message)
+              } finally {
+                setLoading(false)
+              }
+            }}
+            disabled={loading}
+            className="w-full bg-gray-500 text-white px-4 py-3 rounded-lg flex items-center justify-center hover:bg-gray-600 transition-colors disabled:opacity-50 font-medium"
+          >
+            <User className="w-5 h-5 mr-3" />
+            เข้าสู่ระบบแบบแขก
+          </button>
 
-        {currentStep === 'phone' && (
-          <>
-            <div className="text-center mt-6 pt-6 border-t">
-              <p className="text-sm text-gray-600 mb-4">หรือเข้าสู่ระบบด้วยวิธีอื่น</p>
-              <div className="space-y-3">
-                <button
-                  onClick={async () => {
-                    setLoading(true)
-                    setError('')
-                    try {
-                      await signInWithGoogle()
-                    } catch (error: any) {
-                      setError(error.message)
-                    } finally {
-                      setLoading(false)
-                    }
-                  }}
-                  disabled={loading}
-                  className="w-full bg-red-500 text-white px-4 py-2 rounded flex items-center justify-center hover:bg-red-600 transition-colors disabled:opacity-50"
-                >
-                  <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24">
-                    <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                    <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                    <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                    <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                  </svg>
-                  เข้าสู่ระบบด้วย Google
-                </button>
-                
-                <button
-                  onClick={async () => {
-                    setLoading(true)
-                    setError('')
-                    try {
-                      await signInAsGuest()
-                    } catch (error: any) {
-                      setError(error.message)
-                    } finally {
-                      setLoading(false)
-                    }
-                  }}
-                  disabled={loading}
-                  className="w-full bg-gray-500 text-white px-4 py-2 rounded flex items-center justify-center hover:bg-gray-600 transition-colors disabled:opacity-50"
-                >
-                  <User className="w-4 h-4 mr-2" />
-                  เข้าสู่ระบบแบบแขก
-                </button>
-                
-                <Link
-                  to="/demo"
-                  className="bg-yellow-500 text-white px-4 py-2 rounded text-sm flex items-center justify-center hover:bg-yellow-600 transition-colors"
-                >
-                  <TestTube className="w-4 h-4 mr-2" />
-                  ทดลองใช้โหมดDemo
-                </Link>
-              </div>
-            </div>
-          </>
-        )}
+          {/* InstallPWA Component */}
+          <InstallPWA />
+        </div>
 
-        {/* reCAPTCHA container */}
-        <div className="mt-4">
-          <p className="text-xs text-gray-600 mb-2">กรุณายืนยัน reCAPTCHA เพื่อส่ง OTP:</p>
-          <div id="recaptcha-container" className="flex justify-center"></div>
+        {/* Add to Home Screen Button */}
+        <div className="mt-6">
+          <AddToHomeScreenButton />
+        </div>
+
+        <div className="mt-6 pt-4 border-t border-gray-200">
+          <p className="text-xs text-center text-gray-500">
+            สำหรับผู้ปกครองวัยรุ่นที่ต้องการพัฒนาทักษะการเลี้ยงดูลูก
+          </p>
+        </div>
         </div>
       </div>
     </div>
+  )
+}
+
+// Add to Home Screen Button Component for Login Page
+const AddToHomeScreenButton: React.FC = () => {
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null)
+  const [isIos, setIsIos] = useState(false)
+  const [isStandalone, setIsStandalone] = useState(false)
+
+  useEffect(() => {
+    // Detect iOS
+    const userAgent = window.navigator.userAgent.toLowerCase()
+    const iosDevice = /ipad|iphone|ipod/.test(userAgent)
+    setIsIos(iosDevice)
+
+    // Check if already in standalone mode
+    const standalone = 
+      window.matchMedia('(display-mode: standalone)').matches ||
+      (window.navigator as any).standalone ||
+      document.referrer.includes('android-app://')
+    setIsStandalone(standalone)
+
+    // Listen for beforeinstallprompt event
+    const handleBeforeInstallPrompt = (e: any) => {
+      e.preventDefault()
+      setDeferredPrompt(e)
+      // Store it globally too for other components
+      ;(window as any).deferredPrompt = e
+    }
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
+    }
+  }, [])
+
+  const handleInstallClick = async () => {
+    if (isStandalone) {
+      alert('แอปถูกติดตั้งแล้ว!')
+      return
+    }
+
+    if (deferredPrompt) {
+      try {
+        await deferredPrompt.prompt()
+        const { outcome } = await deferredPrompt.userChoice
+        if (outcome === 'accepted') {
+          console.log('PWA installed')
+        }
+        setDeferredPrompt(null)
+        ;(window as any).deferredPrompt = null
+      } catch (error) {
+        console.error('Error installing PWA:', error)
+      }
+    } else if (isIos) {
+      alert('สำหรับ iOS: กดปุ่ม Share (แชร์) ด้านล่าง แล้วเลือก "Add to Home Screen" เพื่อติดตั้งแอป')
+    } else {
+      // For browsers that don't support PWA install yet
+      alert('เพื่อใช้งานแอปแบบออฟไลน์ กรุณาเพิ่มหน้าเว็บนี้เป็นบุ๊กมาร์กหรือเพิ่มลงหน้าจอหลัก')
+    }
+  }
+
+  return (
+    <button
+      onClick={handleInstallClick}
+      className="w-full bg-gradient-to-r from-green-500 to-blue-500 text-white px-4 py-3 rounded-lg flex items-center justify-center hover:from-green-600 hover:to-blue-600 transition-all font-medium"
+    >
+      <Download className="w-5 h-5 mr-3" />
+      <div className="text-left">
+        <div className="font-medium">
+          {isStandalone ? 'แอปติดตั้งแล้ว' : 'เพิ่มลงหน้าจอหลัก'}
+        </div>
+        <div className="text-sm opacity-90">
+          {isStandalone ? 'พร้อมใช้งานแบบออฟไลน์' : 'ติดตั้งแอปเพื่อใช้งานแบบออฟไลน์'}
+        </div>
+      </div>
+    </button>
   )
 }
 

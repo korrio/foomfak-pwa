@@ -53,8 +53,8 @@ export const notificationService = {
       if (Notification.permission === 'granted') {
         new Notification(payload.notification?.title || 'ฟูมฟัก', {
           body: payload.notification?.body,
-          icon: '/pwa-192x192.png',
-          badge: '/pwa-192x192.png'
+          icon: '/logo.png',
+          badge: '/logo.png'
         })
       }
       
@@ -67,8 +67,8 @@ export const notificationService = {
     if ('Notification' in window && Notification.permission === 'granted') {
       new Notification(title, {
         body,
-        icon: '/pwa-192x192.png',
-        badge: '/pwa-192x192.png',
+        icon: '/logo.png',
+        badge: '/logo.png',
         ...options
       })
     }

@@ -34,6 +34,7 @@ interface UserData {
   childAge?: number
   experience?: string
   rating?: number
+  onboardingCompleted?: boolean
   createdAt: Date
   lastActive: Date
 }
@@ -192,6 +193,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       throw new Error('ไม่สามารถเข้าสู่ระบบแบบแขกได้: ' + error.message)
     }
   }
+
 
   const createUserDocument = async (user: User, userData: Partial<UserData>) => {
     // Update display name

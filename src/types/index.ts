@@ -1,3 +1,12 @@
+export interface ChildProfile {
+  name: string
+  birthDate: Date
+  weight: number // in kg
+  gender: 'male' | 'female'
+  age?: number // calculated from birthDate
+  photoUrl?: string // URL to child's photo
+}
+
 export interface User {
   id: string
   email: string
@@ -8,6 +17,8 @@ export interface User {
   level: number
   streak: number
   totalActivities: number
+  childProfile?: ChildProfile
+  // Deprecated fields (keep for backward compatibility)
   childName?: string
   childAge?: number
   experience?: string
