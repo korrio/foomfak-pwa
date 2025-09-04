@@ -11,8 +11,10 @@ import {
   signInWithPopup,
   GoogleAuthProvider
 } from 'firebase/auth'
-import { auth, db } from '../firebase/config'
-import { doc, setDoc, getDoc } from 'firebase/firestore'
+import { auth } from '../firebase/config'
+import { offlineUserService, UserProfile } from '../services/offlineUserService'
+import { syncService } from '../services/syncService'
+import { notificationService } from '../services/notificationService'
 
 // Test phone numbers for development (no SMS sent, no reCAPTCHA required)
 const TEST_PHONE_NUMBERS = {
@@ -22,22 +24,8 @@ const TEST_PHONE_NUMBERS = {
   '+66826539264': '111111'
 }
 
-interface UserData {
-  id: string
-  phone: string
-  name: string
-  role: 'parent' | 'caretaker' | 'admin'
-  points: number
-  level: number
-  streak: number
-  childName?: string
-  childAge?: number
-  experience?: string
-  rating?: number
-  onboardingCompleted?: boolean
-  createdAt: Date
-  lastActive: Date
-}
+// Use the offline UserProfile type
+type UserData = UserProfile
 
 interface AuthContextType {
   currentUser: User | null
@@ -147,22 +135,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const result = await signInWithPopup(auth, provider)
       const user = result.user
       
-      // Check if user already exists in our database
-      const userDoc = await getDoc(doc(db, 'users', user.uid))
+      // Check if user already exists in offline storage
+      let existingUser = await offlineUserService.getUser(user.uid)
       
-      if (!userDoc.exists()) {
+      if (!existingUser) {
         // Create new user document for Google sign-in (with minimal data - onboarding will complete it)
-        const userData: Partial<UserData> = {
+        existingUser = await offlineUserService.createOrUpdateUser({
+          id: user.uid,
           name: user.displayName || 'ผู้ใช้ Google',
-          phone: user.phoneNumber || user.email || '',
-          role: 'parent', // Default role, user can change during onboarding
-          points: 0, // Will be updated to 100 during onboarding
-          level: 1,
-          streak: 0
-        }
-        
-        await createUserDocument(user, userData)
+          email: user.email || undefined,
+          displayName: user.displayName || undefined,
+          photoURL: user.photoURL || undefined,
+          role: 'parent' // Default role, user can change during onboarding
+        })
       }
+      
+      setUserData(existingUser)
       
       console.log('Google sign-in successful')
     } catch (error: any) {
@@ -176,17 +164,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const result = await signInAnonymously(auth)
       const user = result.user
       
-      // Create guest user document
-      const userData: Partial<UserData> = {
-        name: 'ผู้ใช้แขก',
-        phone: '',
-        role: 'parent',
-        points: 0,
-        level: 1,
-        streak: 0
-      }
+      // Create guest user document in offline storage
+      const guestUser = await offlineUserService.createOrUpdateUser({
+        id: user.uid,
+        name: 'ผู้ใช้แขก'
+      })
       
-      await createUserDocument(user, userData)
+      setUserData(guestUser)
       console.log('Anonymous sign-in successful')
     } catch (error: any) {
       console.error('Anonymous sign-in failed:', error)
@@ -196,33 +180,35 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
 
   const createUserDocument = async (user: User, userData: Partial<UserData>) => {
-    // Update display name
+    // Update Firebase profile (display name only)
     if (userData.name) {
       await updateProfile(user, { displayName: userData.name })
     }
 
-    // Create user document in Firestore
-    const userDocData: UserData = {
+    // Create user document in offline storage
+    const userProfile = await offlineUserService.createOrUpdateUser({
       id: user.uid,
-      phone: userData.phone || user.phoneNumber || '',
       name: userData.name || user.displayName || user.email?.split('@')[0] || 'ผู้ใช้',
-      role: userData.role || 'parent',
-      points: 0,
-      level: 1,
-      streak: 0,
+      email: user.email || undefined,
+      displayName: user.displayName || undefined,
+      photoURL: user.photoURL || undefined,
+      role: (userData.role as 'parent' | 'relative' | 'teacher') || 'parent',
       childName: userData.childName,
-      childAge: userData.childAge,
-      experience: userData.experience,
-      rating: userData.rating,
-      createdAt: new Date(),
-      lastActive: new Date()
-    }
+      childAge: userData.childAge
+    })
 
-    await setDoc(doc(db, 'users', user.uid), userDocData)
-    setUserData(userDocData)
+    setUserData(userProfile)
   }
 
   const logout = async () => {
+    // Clear offline data and notifications for current user
+    if (currentUser) {
+      await offlineUserService.deleteUser(currentUser.uid)
+      await notificationService.cancelAllNotifications(currentUser.uid)
+      localStorage.removeItem(`notifications_setup_${currentUser.uid}`)
+    }
+    
+    // Sign out from Firebase
     await signOut(auth)
     setUserData(null)
   }
@@ -230,20 +216,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const updateUserData = async (data: Partial<UserData>) => {
     if (!currentUser || !userData) return
 
-    const updatedData = { ...userData, ...data, lastActive: new Date() }
-    await setDoc(doc(db, 'users', currentUser.uid), updatedData, { merge: true })
-    setUserData(updatedData)
+    const updatedUser = await offlineUserService.updateUser(currentUser.uid, data)
+    setUserData(updatedUser)
   }
 
   const fetchUserData = async (user: User) => {
-    const userDoc = await getDoc(doc(db, 'users', user.uid))
-    if (userDoc.exists()) {
-      const data = userDoc.data() as UserData
-      setUserData({
-        ...data,
-        createdAt: data.createdAt instanceof Date ? data.createdAt : new Date(data.createdAt),
-        lastActive: data.lastActive instanceof Date ? data.lastActive : new Date(data.lastActive)
-      })
+    const userData = await offlineUserService.getUser(user.uid)
+    if (userData) {
+      setUserData(userData)
     }
   }
 
@@ -259,6 +239,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           sessionStorage.removeItem('pendingUserData')
         } else {
           await fetchUserData(user)
+        }
+        
+        // Initialize notification service and set up default notifications for logged-in users
+        try {
+          await notificationService.initialize()
+          
+          // Check if this is a new user or first time setting up notifications
+          const hasSetupNotifications = localStorage.getItem(`notifications_setup_${user.uid}`)
+          if (!hasSetupNotifications) {
+            // Wait a bit to ensure user data is loaded before setting up notifications
+            setTimeout(async () => {
+              await notificationService.setupDefaultNotifications(user.uid)
+              localStorage.setItem(`notifications_setup_${user.uid}`, 'true')
+            }, 2000)
+          }
+        } catch (error) {
+          console.error('Failed to initialize notifications:', error)
         }
       } else {
         setUserData(null)

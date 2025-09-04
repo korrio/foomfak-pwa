@@ -3,7 +3,8 @@ import { Play, Pause, Square, Camera, Mic, Clock, ChevronLeft, Search, Filter, S
 import { createMediaRecorder } from '../utils/mediaRecorder'
 import { requestMicrophonePermission, requestCameraPermission } from '../utils/permissions'
 import { activityTemplates, activityCategories, ActivityTemplate } from '../data/activities'
-import { activityService } from '../services/activityService'
+import { offlineActivityService } from '../services/offlineActivityService'
+import { notificationService } from '../services/notificationService'
 import { useAuth } from '../contexts/AuthContext'
 
 interface Props {
@@ -144,14 +145,14 @@ export const ActivityRecorder: React.FC<Props> = ({ onActivityComplete, onClose,
       
       if ((blob || uploadedFiles.length > 0) && selectedActivity && currentUser) {
         // Use official scoring criteria
-        const officialPoints = activityService.calculatePoints(selectedActivity.id, duration, currentUser.uid)
+        const officialPoints = offlineActivityService.calculatePoints(selectedActivity.id, duration, currentUser.uid)
         
         // Check daily limits
         let canEarnPoints = true
         let remainingPoints = 0
         
         try {
-          const dailyCheck = await activityService.checkDailyLimit(currentUser.uid, selectedActivity.id)
+          const dailyCheck = await offlineActivityService.checkDailyLimit(currentUser.uid, selectedActivity.id)
           canEarnPoints = dailyCheck.canEarn
           remainingPoints = dailyCheck.remainingPoints
         } catch (error) {
@@ -159,10 +160,8 @@ export const ActivityRecorder: React.FC<Props> = ({ onActivityComplete, onClose,
           // Continue with calculation even if limit check fails
         }
         
-        const finalPoints = canEarnPoints ? Math.min(officialPoints, remainingPoints) : 0
-        
-        const result = {
-          id: Date.now().toString(),
+        // Save activity using offline service
+        const savedActivity = await offlineActivityService.saveActivity({
           activityId: selectedActivity.id,
           type: selectedActivity.type,
           name: selectedActivity.name,
@@ -170,17 +169,25 @@ export const ActivityRecorder: React.FC<Props> = ({ onActivityComplete, onClose,
           category: selectedActivity.category,
           difficulty: selectedActivity.difficulty,
           duration,
-          points: finalPoints,
           recordingType,
           blob,
-          uploadedFiles: uploadedFiles,
-          timestamp: new Date(),
+          uploadedFiles,
+          userId: currentUser.uid
+        })
+        
+        // Create result object for component state (with additional info for UI)
+        const result = {
+          ...savedActivity,
           officialPoints,
           canEarnPoints,
           remainingPoints
         }
         
         setActivityResult(result)
+        
+        // Show activity completion notification
+        const activityName = selectedActivity?.name || customActivity.name
+        notificationService.notifyActivityComplete(activityName, result.points)
         
         // Automatically complete activity and close modal instead of showing results step
         onActivityComplete(result)

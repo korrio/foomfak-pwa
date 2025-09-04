@@ -14,7 +14,9 @@ import { AddToHomeScreen } from '../components/AddToHomeScreen'
 import { BottomNavigation } from '../components/BottomNavigation'
 import { EQAssessment } from '../components/EQAssessment'
 import { AssessmentDashboard } from '../components/AssessmentDashboard'
+import NotificationSettings from '../components/NotificationSettings'
 import InstallPWA from '../components/InstallPWA'
+import { versionService } from '../services/versionService'
 import { 
   Play, 
   User, 
@@ -44,6 +46,7 @@ const HomePage: React.FC = () => {
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [showEQAssessment, setShowEQAssessment] = useState(false)
   const [showAssessmentDashboard, setShowAssessmentDashboard] = useState(false)
+  const [showNotificationSettings, setShowNotificationSettings] = useState(false)
   const [assessmentType, setAssessmentType] = useState<'pre-test' | 'post-test'>('pre-test')
   const [activities, setActivities] = useState<Activity[]>([])
   const [challenges, setChallenges] = useState<(Challenge & { currentValue?: number })[]>([])
@@ -325,6 +328,13 @@ const HomePage: React.FC = () => {
             >
               <User className="w-4 h-4 mr-1" />
               ประวัติลูกน้อย
+            </button>
+            <button
+              onClick={() => setShowNotificationSettings(true)}
+              className="text-gray-500 hover:text-gray-700"
+              title="การแจ้งเตือน"
+            >
+              <Bell className="w-5 h-5" />
             </button>
             <button
               onClick={handleLogout}
@@ -615,6 +625,23 @@ const HomePage: React.FC = () => {
           onClose={() => setShowEQAssessment(false)}
         />
       )}
+
+      {/* Notification Settings Modal */}
+      {showNotificationSettings && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="relative max-w-md w-full">
+            <button
+              onClick={() => setShowNotificationSettings(false)}
+              className="absolute -top-12 right-0 text-white hover:text-gray-300 transition-colors"
+            >
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            <NotificationSettings />
+          </div>
+        </div>
+      )}
       </div>
     </div>
   )
@@ -625,7 +652,39 @@ const AuthScreen: React.FC = () => {
   const { signInWithGoogle, signInAsGuest } = useAuth()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [updateAvailable, setUpdateAvailable] = useState(false)
+  const [isUpdating, setIsUpdating] = useState(false)
 
+  useEffect(() => {
+    // Check for updates on component mount
+    const checkUpdate = async () => {
+      const hasUpdate = await versionService.checkForUpdate()
+      setUpdateAvailable(hasUpdate)
+    }
+    checkUpdate()
+
+    // Listen for update events
+    const handleUpdateAvailable = () => {
+      setUpdateAvailable(true)
+    }
+
+    window.addEventListener('app-update-available', handleUpdateAvailable)
+    return () => {
+      window.removeEventListener('app-update-available', handleUpdateAvailable)
+    }
+  }, [])
+
+  const handleUpdate = async () => {
+    setIsUpdating(true)
+    try {
+      await versionService.applyUpdate()
+    } catch (error) {
+      console.error('Update failed:', error)
+      setError('การอัปเดตล้มเหลว กรุณาลองใหม่อีกครั้ง')
+    } finally {
+      setIsUpdating(false)
+    }
+  }
 
   return (
     <div className="min-h-screen w-full bg-[#fafafa] relative text-gray-900 flex items-center justify-center p-4">
@@ -715,10 +774,44 @@ const AuthScreen: React.FC = () => {
           <AddToHomeScreenButton />
         </div>
 
+        {/* Update Button */}
+        {updateAvailable && (
+          <div className="mt-4">
+            <button
+              onClick={handleUpdate}
+              disabled={isUpdating}
+              className="w-full bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors disabled:opacity-50 text-sm font-medium flex items-center justify-center"
+            >
+              {isUpdating ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  กำลังอัปเดต...
+                </>
+              ) : (
+                <>
+                  📦 อัปเดตเวอร์ชันใหม่
+                </>
+              )}
+            </button>
+          </div>
+        )}
+
         <div className="mt-6 pt-4 border-t border-gray-200">
           <p className="text-xs text-center text-gray-500">
             สำหรับผู้ปกครองวัยรุ่นที่ต้องการพัฒนาทักษะการเลี้ยงดูลูก
           </p>
+          
+          {/* App Version */}
+          <div className="mt-2 text-center">
+            <span className="text-xs text-gray-400">
+              {versionService.formatVersion(versionService.getCurrentVersion())}
+            </span>
+            {updateAvailable && (
+              <span className="ml-2 text-xs bg-green-100 text-green-600 px-2 py-1 rounded-full">
+                อัปเดตพร้อมใช้งาน
+              </span>
+            )}
+          </div>
         </div>
         </div>
       </div>

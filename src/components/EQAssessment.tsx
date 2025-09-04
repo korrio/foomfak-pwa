@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
-import { eqAssessmentService } from '../services/eqAssessmentService'
+import { offlineEQAssessmentService } from '../services/offlineEQAssessmentService'
 import { 
   eqQuestions, 
   assessmentInstructions, 
@@ -93,10 +93,10 @@ export const EQAssessment: React.FC<Props> = ({ type, onComplete, onClose }) => 
       console.log('Assessment type:', type)
       console.log('Responses:', responses)
       
-      const scores = eqAssessmentService.calculateScores(responses)
+      const scores = offlineEQAssessmentService.calculateScores(responses)
       console.log('Calculated scores:', scores)
       
-      const interpretation = eqAssessmentService.interpretScores(scores)
+      const interpretation = offlineEQAssessmentService.interpretScores(scores)
       console.log('Interpretation:', interpretation)
 
       const assessment: Omit<EQAssessmentType, 'id' | 'completedAt'> = {
@@ -108,12 +108,7 @@ export const EQAssessment: React.FC<Props> = ({ type, onComplete, onClose }) => 
         interpretation
       }
 
-      const assessmentId = await eqAssessmentService.saveAssessment(assessment)
-      const savedAssessment: EQAssessmentType = {
-        ...assessment,
-        id: assessmentId,
-        completedAt: new Date()
-      }
+      const savedAssessment = await offlineEQAssessmentService.saveAssessment(assessment)
 
       setResults(savedAssessment)
       setCurrentStep('results')
@@ -135,15 +130,17 @@ export const EQAssessment: React.FC<Props> = ({ type, onComplete, onClose }) => 
       alert(errorMessage)
       
       // Even if saving fails, still show results for user feedback
+      const fallbackScores = offlineEQAssessmentService.calculateScores(responses)
       const localAssessment: EQAssessmentType = {
         id: 'local_assessment',
         userId: currentUser.uid,
         childAge,
         type,
         responses,
-        scores: eqAssessmentService.calculateScores(responses),
-        interpretation: eqAssessmentService.interpretScores(eqAssessmentService.calculateScores(responses)),
-        completedAt: new Date()
+        scores: fallbackScores,
+        interpretation: offlineEQAssessmentService.interpretScores(fallbackScores),
+        completedAt: new Date(),
+        synced: false
       }
       
       setResults(localAssessment)
@@ -345,7 +342,7 @@ export const EQAssessment: React.FC<Props> = ({ type, onComplete, onClose }) => 
       )
     }
 
-    const report = eqAssessmentService.generateReport(results)
+    const report = offlineEQAssessmentService.generateReport(results)
 
     return (
       <div className="p-6">
