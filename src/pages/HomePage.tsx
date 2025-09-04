@@ -558,11 +558,10 @@ const HomePage: React.FC = () => {
           onComplete={async () => {
             setShowOnboarding(false)
             
-            // Mark onboarding as completed and give welcome bonus
+            // Mark onboarding as completed (points are already updated in OnboardingModal)
             if (currentUser && userData) {
               await updateUserData({
                 onboardingCompleted: true,
-                points: userData.points + 100, // Welcome bonus
                 lastActive: new Date()
               })
             }

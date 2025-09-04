@@ -96,7 +96,7 @@ export const OnboardingModal: React.FC<Props> = ({ onComplete }) => {
       const updateData: any = {
         name: formData.name,
         role: formData.role,
-        points: 100, // Welcome bonus
+        points: (userData?.points || 0) + 100, // Add 100 welcome bonus to existing points
         level: 1,
         streak: 0
       }
