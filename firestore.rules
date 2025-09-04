@@ -43,5 +43,23 @@ service cloud.firestore {
       allow read, write: if request.auth != null && 
         (request.auth.uid == resource.data.userId || request.auth.uid == request.resource.data.userId);
     }
+    
+    // User challenges - users can read and write their own
+    match /userChallenges/{userChallengeId} {
+      allow read, write: if request.auth != null && 
+        (request.auth.uid == resource.data.userId || request.auth.uid == request.resource.data.userId);
+    }
+    
+    // User achievements - users can read and write their own
+    match /userAchievements/{userAchievementId} {
+      allow read, write: if request.auth != null && 
+        (request.auth.uid == resource.data.userId || request.auth.uid == request.resource.data.userId);
+    }
+    
+    // Redemptions - users can read and write their own
+    match /redemptions/{redemptionId} {
+      allow read, write: if request.auth != null && 
+        (request.auth.uid == resource.data.userId || request.auth.uid == request.resource.data.userId);
+    }
   }
 }

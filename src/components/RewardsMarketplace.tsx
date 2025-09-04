@@ -235,70 +235,94 @@ export const RewardsMarketplace: React.FC<Props> = ({ onClose }) => {
       </div>
 
       {/* Rewards Grid */}
-      <div className="grid grid-cols-1 gap-4">
+      <div className="grid grid-cols-2 gap-3">
         {getFilteredRewards().map(reward => {
           const canAfford = userData ? userData.points >= reward.pointsCost : false
           const isLowStock = reward.availableQuantity !== undefined && reward.availableQuantity < 5
           
           return (
-            <button
+            <div
               key={reward.id}
-              onClick={() => setSelectedReward(reward)}
-              className={`p-4 border rounded-lg text-left transition-colors ${
+              className={`aspect-square border rounded-lg overflow-hidden transition-colors ${
                 canAfford 
-                  ? 'border-gray-200 hover:border-blue-300 hover:bg-blue-50' 
+                  ? 'border-gray-200 hover:border-blue-300 hover:shadow-md' 
                   : 'border-gray-100 bg-gray-50 opacity-60'
               }`}
             >
-              <div className="flex items-start">
-                <div className={`${reward.color} p-3 rounded-lg mr-4`}>
-                  <reward.icon className="w-6 h-6 text-white" />
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between mb-1">
-                    <h3 className="font-medium text-lg">{reward.title}</h3>
-                    <div className="flex items-center space-x-2">
-                      {reward.popular && (
-                        <span className="bg-orange-100 text-orange-800 px-2 py-1 rounded text-xs font-medium">
-                          ยอดนิยม
-                        </span>
-                      )}
-                      {isLowStock && (
-                        <span className="bg-red-100 text-red-800 px-2 py-1 rounded text-xs font-medium">
-                          เหลือน้อย
-                        </span>
-                      )}
-                    </div>
+              <button
+                onClick={() => setSelectedReward(reward)}
+                className="w-full h-full p-3 flex flex-col text-left"
+              >
+                {/* Icon and badges */}
+                <div className="flex items-start justify-between mb-2">
+                  <div className={`${reward.color} p-2 rounded-lg`}>
+                    <reward.icon className="w-5 h-5 text-white" />
                   </div>
-                  <p className="text-gray-600 text-sm mb-2">{reward.description}</p>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <span className="text-sm text-gray-500">โดย {reward.partner}</span>
-                      <span className={`px-2 py-1 rounded text-xs ${
-                        reward.type === 'voucher' ? 'bg-blue-100 text-blue-800' :
-                        reward.type === 'discount' ? 'bg-green-100 text-green-800' :
-                        reward.type === 'product' ? 'bg-purple-100 text-purple-800' :
-                        'bg-orange-100 text-orange-800'
-                      }`}>
-                        {reward.type === 'voucher' ? 'บัตรกำนัล' :
-                         reward.type === 'discount' ? 'ส่วนลด' :
-                         reward.type === 'product' ? 'สินค้า' : 'บริการ'}
+                  <div className="flex flex-col gap-1">
+                    {reward.popular && (
+                      <span className="bg-orange-100 text-orange-800 px-1.5 py-0.5 rounded text-xs font-medium">
+                        ยอดนิยม
                       </span>
-                      {reward.availableQuantity !== undefined && (
-                        <div className="flex items-center text-gray-500">
-                          <Users className="w-4 h-4 mr-1" />
-                          <span className="text-xs">เหลือ {reward.availableQuantity}</span>
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex items-center text-yellow-500">
-                      <Star className="w-4 h-4 mr-1" />
-                      <span className="font-medium">{reward.pointsCost} แต้ม</span>
-                    </div>
+                    )}
+                    {isLowStock && (
+                      <span className="bg-red-100 text-red-800 px-1.5 py-0.5 rounded text-xs font-medium">
+                        เหลือน้อย
+                      </span>
+                    )}
                   </div>
                 </div>
-              </div>
-            </button>
+                
+                {/* Title */}
+                <h3 className="font-medium text-sm mb-1 line-clamp-2 flex-shrink-0">{reward.title}</h3>
+                
+                {/* Partner */}
+                <p className="text-xs text-gray-500 mb-2 flex-shrink-0">โดย {reward.partner}</p>
+                
+                {/* Description */}
+                <p className="text-xs text-gray-600 mb-2 line-clamp-2 flex-1">{reward.description}</p>
+                
+                {/* Points and type */}
+                <div className="flex items-center justify-between mt-auto">
+                  <div className="flex items-center text-yellow-500">
+                    <Star className="w-3 h-3 mr-1" />
+                    <span className="text-xs font-bold">{reward.pointsCost}</span>
+                  </div>
+                  <span className={`px-1.5 py-0.5 rounded text-xs ${
+                    reward.type === 'voucher' ? 'bg-blue-100 text-blue-800' :
+                    reward.type === 'discount' ? 'bg-green-100 text-green-800' :
+                    reward.type === 'product' ? 'bg-purple-100 text-purple-800' :
+                    'bg-orange-100 text-orange-800'
+                  }`}>
+                    {reward.type === 'voucher' ? 'บัตรกำนัล' :
+                     reward.type === 'discount' ? 'ส่วนลด' :
+                     reward.type === 'product' ? 'สินค้า' : 'บริการ'}
+                  </span>
+                </div>
+              </button>
+              
+              {/* Redeem button */}
+              {canAfford && (
+                <div className="px-3 pb-3">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleRedeemReward(reward)
+                    }}
+                    disabled={loading}
+                    className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-1.5 rounded text-xs font-medium hover:from-purple-600 hover:to-pink-600 transition-all disabled:opacity-50 flex items-center justify-center"
+                  >
+                    {loading ? (
+                      <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
+                    ) : (
+                      <>
+                        <ShoppingCart className="w-3 h-3 mr-1" />
+                        แลกรางวัล
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
+            </div>
           )
         })}
       </div>
