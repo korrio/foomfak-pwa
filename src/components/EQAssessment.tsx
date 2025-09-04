@@ -115,7 +115,9 @@ export const EQAssessment: React.FC<Props> = ({ type, onComplete, onClose }) => 
         completedAt: new Date()
       }
 
+      console.log('Setting results:', savedAssessment)
       setResults(savedAssessment)
+      console.log('Setting step to results')
       setCurrentStep('results')
       onComplete(savedAssessment)
     } catch (error: any) {
@@ -146,7 +148,9 @@ export const EQAssessment: React.FC<Props> = ({ type, onComplete, onClose }) => 
         completedAt: new Date()
       }
       
+      console.log('Setting local results (after error):', localAssessment)
       setResults(localAssessment)
+      console.log('Setting step to results (after error)')
       setCurrentStep('results')
     } finally {
       setLoading(false)
@@ -323,9 +327,15 @@ export const EQAssessment: React.FC<Props> = ({ type, onComplete, onClose }) => 
   )
 
   const renderResults = () => {
-    if (!results) return null
+    console.log('renderResults called, results:', results)
+    if (!results) {
+      console.log('No results available')
+      return null
+    }
 
+    console.log('Generating report for results:', results)
     const report = eqAssessmentService.generateReport(results)
+    console.log('Generated report:', report)
 
     return (
       <div className="p-6">
@@ -428,6 +438,7 @@ export const EQAssessment: React.FC<Props> = ({ type, onComplete, onClose }) => 
         </div>
 
         {/* Content */}
+        {console.log('Current step:', currentStep)}
         {currentStep === 'intro' && renderIntro()}
         {currentStep === 'questions' && renderQuestions()}
         {currentStep === 'results' && renderResults()}
