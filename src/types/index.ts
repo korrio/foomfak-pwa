@@ -40,6 +40,7 @@ export type ActivityType =
   | 'outdoor_activity'
   | 'education'
   | 'care_giving'
+  | 'affection'
 
 export interface Reward {
   id: string

@@ -18,20 +18,67 @@ export interface ActivityTemplate {
 }
 
 export const activityTemplates: ActivityTemplate[] = [
-  // Basic Care
+  // Core Activities (Based on official criteria)
+  {
+    id: 'reading_story',
+    type: 'reading',
+    name: 'อ่านนิทานให้ลูกฟัง',
+    description: 'อ่านนิทานให้ลูกฟัง (อย่างน้อย 5 นาที)',
+    icon: BookOpen,
+    points: 1, // 1 point per minute, max 15 points per day
+    color: 'bg-blue-500',
+    category: 'การเรียนรู้',
+    minDuration: 300, // 5 minutes
+    maxDuration: 900, // 15 minutes (daily limit)
+    tips: ['อ่านอย่างน้อย 5 นาที', 'นาทีละ 1 คะแนน', 'วันละไม่เกิน 15 คะแนน', 'แต่งเสียงตามตัวละคร'],
+    ageGroups: ['แรกเกิด', '6 เดือน', '1 ปี', '2 ปี', '3 ปี', '4 ปี', '5 ปี', '6 ปี'],
+    difficulty: 'easy'
+  },
+  {
+    id: 'hugging',
+    type: 'affection',
+    name: 'กอดลูก',
+    description: 'กอดลูกอย่างน้อย 5 วินาที (อย่างน้อย 2 ครั้ง/วัน)',
+    icon: Heart,
+    points: 5, // 5 points per day (counted once daily)
+    color: 'bg-pink-500',
+    category: 'ความรัก',
+    minDuration: 5, // 5 seconds
+    maxDuration: 300, // 5 minutes
+    tips: ['อย่างน้อย 2 ครั้งต่อวัน', 'นับแต้มวันละ 1 ครั้ง', 'กอดอย่างน้อย 5 วินาที', 'แสดงความรักอย่างจริงใจ'],
+    ageGroups: ['แรกเกิด', '6 เดือน', '1 ปี', '2 ปี', '3 ปี', '4 ปี', '5 ปี', '6 ปี'],
+    difficulty: 'easy'
+  },
+  {
+    id: 'playing_together',
+    type: 'playing',
+    name: 'เล่นกับลูก/วาดรูป/ระบายสี',
+    description: 'เล่นกับลูก วาดรูป หรือระบายสีกับลูก (อย่างน้อย 5 นาที)',
+    icon: Gamepad2,
+    points: 1, // 1 point per minute, max 15 points per day
+    color: 'bg-green-500',
+    category: 'การเล่น',
+    minDuration: 300, // 5 minutes
+    maxDuration: 900, // 15 minutes (daily limit)
+    tips: ['อย่างน้อย 5 นาที', 'นาทีละ 1 คะแนน', 'วันละไม่เกิน 15 คะแนน', 'สร้างบรรยากาศสนุกสนาน'],
+    ageGroups: ['6 เดือน', '1 ปี', '2 ปี', '3 ปี', '4 ปี', '5 ปี', '6 ปี'],
+    difficulty: 'easy'
+  },
+
+  // Additional Support Activities
   {
     id: 'feeding_bottle',
     type: 'feeding',
     name: 'ให้นมขวด',
     description: 'ให้นมขวดกับลูกน้อย',
     icon: Utensils,
-    points: 30,
+    points: 10,
     color: 'bg-orange-500',
     category: 'การดูแลพื้นฐาน',
     minDuration: 300, // 5 minutes
     maxDuration: 1800, // 30 minutes
     tips: ['ตรวจอุณหภูมินม', 'ให้ลูกอิ่มท้อง', 'เรอลมหลังดื่มนม'],
-    ageGroups: ['0-6 เดือน', '6-12 เดือน'],
+    ageGroups: ['แรกเกิด', '6 เดือน', '1 ปี'],
     difficulty: 'easy'
   },
   {
@@ -40,63 +87,14 @@ export const activityTemplates: ActivityTemplate[] = [
     name: 'ให้อาหารแข็ง',
     description: 'ให้อาหารแข็งกับลูก',
     icon: Utensils,
-    points: 50,
-    color: 'bg-orange-500',
+    points: 15,
+    color: 'bg-orange-600',
     category: 'การดูแลพื้นฐาน',
     minDuration: 600, // 10 minutes
     maxDuration: 2700, // 45 minutes
     tips: ['เตรียมอาหารให้เหมาะกับวัย', 'ให้ลูกฝึกจับช้อน', 'สร้างบรรยากาศสนุก'],
-    ageGroups: ['6-12 เดือน', '1-2 ปี', '2-3 ปี'],
+    ageGroups: ['6 เดือน', '1 ปี', '2 ปี', '3 ปี'],
     difficulty: 'medium'
-  },
-
-  // Learning & Development  
-  {
-    id: 'reading_picture',
-    type: 'reading',
-    name: 'อ่านหนังสือภาพ',
-    description: 'อ่านหนังสือภาพให้ลูกฟัง',
-    icon: BookOpen,
-    points: 80,
-    color: 'bg-blue-500',
-    category: 'การเรียนรู้',
-    minDuration: 600, // 10 minutes
-    maxDuration: 1800, // 30 minutes
-    tips: ['ใช้เสียงที่น่าสนใจ', 'ชี้รูปภาพให้ดู', 'ถามคำถามเกี่ยวกับเรื่อง'],
-    ageGroups: ['6-12 เดือน', '1-2 ปี', '2-3 ปี', '3-5 ปี'],
-    difficulty: 'easy'
-  },
-  {
-    id: 'reading_story',
-    type: 'reading',
-    name: 'เล่านิทาน',
-    description: 'เล่านิทานให้ลูกฟัง',
-    icon: BookOpen,
-    points: 100,
-    color: 'bg-blue-600',
-    category: 'การเรียนรู้',
-    minDuration: 900, // 15 minutes
-    maxDuration: 2400, // 40 minutes
-    tips: ['แต่งเสียงตามตัวละคร', 'สร้างจังหวะที่น่าตื่นเต้น', 'อธิบายคำศัพท์ใหม่'],
-    ageGroups: ['2-3 ปี', '3-5 ปี'],
-    difficulty: 'medium'
-  },
-
-  // Play & Entertainment
-  {
-    id: 'play_toys',
-    type: 'playing',
-    name: 'เล่นของเล่น',
-    description: 'เล่นของเล่นกับลูก',
-    icon: Gamepad2,
-    points: 60,
-    color: 'bg-green-500',
-    category: 'การเล่น',
-    minDuration: 900, // 15 minutes
-    maxDuration: 3600, // 60 minutes
-    tips: ['เลือกของเล่นให้เหมาะกับวัย', 'เล่นร่วมกันอย่างสนุกสนาน', 'ฝึกการแก้ปัญหา'],
-    ageGroups: ['6-12 เดือน', '1-2 ปี', '2-3 ปี', '3-5 ปี'],
-    difficulty: 'easy'
   },
   {
     id: 'play_music',
@@ -104,13 +102,13 @@ export const activityTemplates: ActivityTemplate[] = [
     name: 'ร้องเพลง-เต้นรำ',
     description: 'ร้องเพลงและเต้นรำกับลูก',
     icon: Music,
-    points: 70,
+    points: 10,
     color: 'bg-green-600',
     category: 'การเล่น',
-    minDuration: 600, // 10 minutes
+    minDuration: 300, // 5 minutes
     maxDuration: 1800, // 30 minutes
     tips: ['เลือกเพลงที่เด็กชอบ', 'สอนการเคลื่อนไหวง่ายๆ', 'สนุกไปด้วยกัน'],
-    ageGroups: ['1-2 ปี', '2-3 ปี', '3-5 ปี'],
+    ageGroups: ['1 ปี', '2 ปี', '3 ปี', '4 ปี', '5 ปี'],
     difficulty: 'easy'
   },
 
@@ -244,11 +242,12 @@ export const activityTemplates: ActivityTemplate[] = [
 ]
 
 export const activityCategories = [
+  { id: 'core', name: 'กิจกรรมหลัก', color: 'bg-purple-100 text-purple-800' },
   { id: 'basic_care', name: 'การดูแลพื้นฐาน', color: 'bg-orange-100 text-orange-800' },
   { id: 'learning', name: 'การเรียนรู้', color: 'bg-blue-100 text-blue-800' },
   { id: 'play', name: 'การเล่น', color: 'bg-green-100 text-green-800' },
+  { id: 'affection', name: 'ความรัก', color: 'bg-pink-100 text-pink-800' },
   { id: 'health', name: 'สุขอนามัย', color: 'bg-cyan-100 text-cyan-800' },
-  { id: 'health_check', name: 'สุขภาพ', color: 'bg-red-100 text-red-800' },
   { id: 'rest', name: 'การพักผ่อน', color: 'bg-purple-100 text-purple-800' },
   { id: 'education', name: 'การศึกษา', color: 'bg-indigo-100 text-indigo-800' },
   { id: 'outdoor', name: 'กิจกรรมกลางแจ้ง', color: 'bg-emerald-100 text-emerald-800' }

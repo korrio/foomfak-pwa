@@ -12,6 +12,7 @@ import {
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { db, storage } from '../firebase/config'
 import { Activity, ActivityType } from '../types'
+import { activityTemplates } from '../data/activities'
 
 export interface ActivityData {
   userId: string
@@ -26,6 +27,74 @@ export interface ActivityData {
 }
 
 export const activityService = {
+  // Calculate points based on official criteria
+  calculatePoints(activityId: string, durationInSeconds: number, userId: string): number {
+    const template = activityTemplates.find(t => t.id === activityId)
+    if (!template) return 0
+
+    // Special point calculation rules
+    switch (activityId) {
+      case 'reading_story': // 1 point per minute, max 15 per day
+        const readingMinutes = Math.floor(durationInSeconds / 60)
+        return Math.min(readingMinutes, 15)
+      
+      case 'playing_together': // 1 point per minute, max 15 per day  
+        const playingMinutes = Math.floor(durationInSeconds / 60)
+        return Math.min(playingMinutes, 15)
+      
+      case 'hugging': // 5 points per day (counted once daily)
+        return 5
+      
+      default: // For other activities, use template points
+        return template.points
+    }
+  },
+
+  // Check daily limits for core activities
+  async checkDailyLimit(userId: string, activityId: string): Promise<{ canEarn: boolean; remainingPoints: number }> {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const tomorrow = new Date(today)
+    tomorrow.setDate(tomorrow.getDate() + 1)
+
+    // Query today's activities for this user and activity type
+    const q = query(
+      collection(db, 'activities'),
+      where('userId', '==', userId),
+      where('type', '==', activityTemplates.find(t => t.id === activityId)?.type || ''),
+      where('timestamp', '>=', today),
+      where('timestamp', '<', tomorrow)
+    )
+    
+    const querySnapshot = await getDocs(q)
+    const todayActivities = querySnapshot.docs.map(doc => doc.data())
+
+    // Calculate points earned today for this activity type
+    let pointsEarnedToday = 0
+    todayActivities.forEach(activity => {
+      if (activity.type === 'reading' && activityId === 'reading_story') {
+        pointsEarnedToday += activity.points || 0
+      } else if (activity.type === 'playing' && activityId === 'playing_together') {
+        pointsEarnedToday += activity.points || 0
+      } else if (activity.type === 'affection' && activityId === 'hugging') {
+        pointsEarnedToday = 5 // Already earned today
+      }
+    })
+
+    // Check limits
+    const dailyLimits = {
+      'reading_story': 15,
+      'playing_together': 15, 
+      'hugging': 5
+    }
+
+    const limit = dailyLimits[activityId as keyof typeof dailyLimits] || 999
+    const canEarn = pointsEarnedToday < limit
+    const remainingPoints = Math.max(0, limit - pointsEarnedToday)
+
+    return { canEarn, remainingPoints }
+  },
+
   // Create new activity
   async createActivity(activityData: ActivityData): Promise<string> {
     const docRef = await addDoc(collection(db, 'activities'), {

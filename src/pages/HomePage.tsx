@@ -7,6 +7,7 @@ import { notificationService } from '../services/notificationService'
 import { Activity } from '../types'
 import { challengeService } from '../services/challengeService'
 import { Challenge, Achievement } from '../data/challenges'
+import { activityTemplates } from '../data/activities'
 import { RewardsMarketplace } from '../components/RewardsMarketplace'
 import { OnboardingModal } from '../components/OnboardingModal'
 import { AddToHomeScreen } from '../components/AddToHomeScreen'
@@ -295,6 +296,52 @@ const HomePage: React.FC = () => {
             <Plus className="w-5 h-5 mr-2" />
             เริ่มบันทึกกิจกรรม
           </button>
+        </div>
+
+        {/* Popular Activities */}
+        <div className="bg-white rounded-lg shadow-md p-4">
+          <h3 className="font-bold text-lg mb-3 flex items-center">
+            <TrendingUp className="w-5 h-5 mr-2 text-orange-500" />
+            กิจกรรมยอดนิยม
+          </h3>
+          <div className="grid grid-cols-2 gap-3">
+            {activityTemplates
+              .filter(activity => 
+                // Show core activities first (reading, hugging, playing)
+                ['reading_story', 'hugging', 'playing_together'].includes(activity.id) ||
+                // Then show easy activities
+                activity.difficulty === 'easy'
+              )
+              .slice(0, 6)
+              .map(activity => (
+                <button
+                  key={activity.id}
+                  onClick={() => setShowActivityRecorder(true)}
+                  className="p-3 border border-gray-200 rounded-lg hover:border-orange-300 hover:bg-orange-50 transition-colors text-left"
+                >
+                  <div className={`${activity.color} p-2 rounded-lg inline-block mb-2`}>
+                    <activity.icon className="w-4 h-4 text-white" />
+                  </div>
+                  <h4 className="font-medium text-sm mb-1">{activity.name}</h4>
+                  <p className="text-xs text-gray-600 mb-2 line-clamp-2">{activity.description}</p>
+                  <div className="flex items-center justify-between">
+                    <span className={`px-2 py-0.5 rounded text-xs ${
+                      activity.difficulty === 'easy' ? 'bg-green-100 text-green-800' :
+                      activity.difficulty === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                      'bg-red-100 text-red-800'
+                    }`}>
+                      {activity.difficulty === 'easy' ? 'ง่าย' :
+                       activity.difficulty === 'medium' ? 'ปานกลาง' : 'ยาก'}
+                    </span>
+                    <div className="flex items-center text-yellow-500">
+                      <Star className="w-3 h-3 mr-1" />
+                      <span className="text-xs font-bold">{activity.points}</span>
+                    </div>
+                  </div>
+                </button>
+              ))
+            }
+          </div>
         </div>
 
         {/* Daily Challenges */}
