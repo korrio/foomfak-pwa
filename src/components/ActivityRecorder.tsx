@@ -9,9 +9,10 @@ import { useAuth } from '../contexts/AuthContext'
 interface Props {
   onActivityComplete: (activity: any) => void
   onClose: () => void
+  preSelectedActivity?: ActivityTemplate | null
 }
 
-export const ActivityRecorder: React.FC<Props> = ({ onActivityComplete, onClose }) => {
+export const ActivityRecorder: React.FC<Props> = ({ onActivityComplete, onClose, preSelectedActivity }) => {
   const { currentUser } = useAuth()
   const [currentStep, setCurrentStep] = useState<'categories' | 'activities' | 'recording' | 'results' | 'custom'>('categories')
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
@@ -32,6 +33,16 @@ export const ActivityRecorder: React.FC<Props> = ({ onActivityComplete, onClose 
     minDuration: 5 * 60, // 5 minutes in seconds
     points: 10
   })
+
+  // Handle pre-selected activity
+  useEffect(() => {
+    if (preSelectedActivity) {
+      setSelectedActivity(preSelectedActivity)
+      setCurrentStep('recording')
+    } else {
+      setCurrentStep('categories')
+    }
+  }, [preSelectedActivity])
 
   useEffect(() => {
     let interval: NodeJS.Timeout

@@ -39,6 +39,7 @@ const HomePage: React.FC = () => {
   const { currentUser, userData, logout, loading, updateUserData } = useAuth()
   const [activeTab, setActiveTab] = useState<'home' | 'record' | 'rewards' | 'assessment'>('home')
   const [showActivityRecorder, setShowActivityRecorder] = useState(false)
+  const [preSelectedActivity, setPreSelectedActivity] = useState<any>(null)
   const [showRewardsMarketplace, setShowRewardsMarketplace] = useState(false)
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [showEQAssessment, setShowEQAssessment] = useState(false)
@@ -224,6 +225,7 @@ const HomePage: React.FC = () => {
     // Handle navigation actions
     switch (tab) {
       case 'record':
+        setPreSelectedActivity(null) // No pre-selected activity for manual selection
         setShowActivityRecorder(true)
         setActiveTab('home') // Reset to home after opening modal
         break
@@ -379,7 +381,10 @@ const HomePage: React.FC = () => {
               .map(activity => (
                 <button
                   key={activity.id}
-                  onClick={() => setShowActivityRecorder(true)}
+                  onClick={() => {
+                    setPreSelectedActivity(activity)
+                    setShowActivityRecorder(true)
+                  }}
                   className="p-3 border border-gray-200 rounded-lg hover:border-orange-300 hover:bg-orange-50 transition-colors text-left"
                 >
                   <div className={`${activity.color} p-2 rounded-lg inline-block mb-2`}>
@@ -541,7 +546,11 @@ const HomePage: React.FC = () => {
       {showActivityRecorder && (
         <ActivityRecorder
           onActivityComplete={handleActivityComplete}
-          onClose={() => setShowActivityRecorder(false)}
+          onClose={() => {
+            setShowActivityRecorder(false)
+            setPreSelectedActivity(null)
+          }}
+          preSelectedActivity={preSelectedActivity}
         />
       )}
 
