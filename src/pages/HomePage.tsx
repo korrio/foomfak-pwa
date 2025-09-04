@@ -184,6 +184,9 @@ const HomePage: React.FC = () => {
       // Add to local activities list
       setActivities(prev => [activity, ...prev])
 
+      // Refresh activities from server to ensure consistency
+      await loadUserActivities()
+
       // Refresh challenges and achievements
       await loadUserChallenges()
       await loadUserAchievements()
@@ -202,7 +205,9 @@ const HomePage: React.FC = () => {
       notificationService.notifyActivityComplete(activityData.name, activityData.points + bonusPoints)
       showNotification(message)
       
+      // Close modal and clear pre-selected activity
       setShowActivityRecorder(false)
+      setPreSelectedActivity(null)
     } catch (error) {
       console.error('Failed to save activity:', error)
       showNotification('ไม่สามารถบันทึกกิจกรรมได้ กรุณาลองใหม่')
