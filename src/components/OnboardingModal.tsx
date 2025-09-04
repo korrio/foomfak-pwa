@@ -10,11 +10,11 @@ interface Props {
 }
 
 export const OnboardingModal: React.FC<Props> = ({ onComplete }) => {
-  const { currentUser, updateUserData } = useAuth()
+  const { currentUser, updateUserData, userData } = useAuth()
   const [currentStep, setCurrentStep] = useState<'welcome' | 'profile' | 'child' | 'complete'>('welcome')
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
-    name: currentUser?.displayName || '',
+    name: userData?.name || currentUser?.displayName || currentUser?.email?.split('@')[0] || 'ผู้ใช้',
     role: 'parent' as 'parent' | 'caretaker',
   })
   const [childProfile, setChildProfile] = useState<ChildProfile>({

@@ -336,7 +336,7 @@ const HomePage: React.FC = () => {
       <div className="max-w-md mx-auto p-4 space-y-6 pb-20">
         {/* User Stats */}
         <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-6 rounded-lg">
-          <h2 className="text-xl font-bold mb-2">สวัสดี {userData?.name}</h2>
+          <h2 className="text-xl font-bold mb-2">สวัสดี {userData?.name || currentUser?.displayName || currentUser?.email?.split('@')[0] || 'ผู้ใช้'}</h2>
           <div className="flex justify-between items-center mb-4">
             <div className="flex items-center">
               <Star className="w-5 h-5 mr-1 text-yellow-300" />

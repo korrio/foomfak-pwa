@@ -205,7 +205,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const userDocData: UserData = {
       id: user.uid,
       phone: userData.phone || user.phoneNumber || '',
-      name: userData.name || '',
+      name: userData.name || user.displayName || user.email?.split('@')[0] || 'ผู้ใช้',
       role: userData.role || 'parent',
       points: 0,
       level: 1,
