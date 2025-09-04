@@ -17,9 +17,10 @@ import {
 interface Props {
   onStartAssessment: (type: 'pre-test' | 'post-test') => void
   onClose: () => void
+  refreshTrigger?: number // Add optional prop to trigger refresh
 }
 
-export const AssessmentDashboard: React.FC<Props> = ({ onStartAssessment, onClose }) => {
+export const AssessmentDashboard: React.FC<Props> = ({ onStartAssessment, onClose, refreshTrigger }) => {
   const { currentUser } = useAuth()
   const [assessments, setAssessments] = useState<EQAssessmentType[]>([])
   const [loading, setLoading] = useState(true)
@@ -29,6 +30,13 @@ export const AssessmentDashboard: React.FC<Props> = ({ onStartAssessment, onClos
       loadAssessments()
     }
   }, [currentUser])
+
+  // Refresh assessments when refreshTrigger changes
+  useEffect(() => {
+    if (currentUser && refreshTrigger) {
+      loadAssessments()
+    }
+  }, [refreshTrigger, currentUser])
 
   const loadAssessments = async () => {
     if (!currentUser) return

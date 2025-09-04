@@ -50,6 +50,7 @@ const HomePage: React.FC = () => {
   const [achievements, setAchievements] = useState<Achievement[]>([])
   const [notification, setNotification] = useState('')
   const [loadingActivities, setLoadingActivities] = useState(false)
+  const [assessmentRefreshTrigger, setAssessmentRefreshTrigger] = useState(0)
 
   useEffect(() => {
     if (currentUser && userData) {
@@ -258,6 +259,9 @@ const HomePage: React.FC = () => {
   const handleEQAssessmentComplete = (assessment: any) => {
     showNotification(`ทำแบบประเมิน ${assessment.type === 'pre-test' ? 'ก่อนใช้แอป' : 'หลังใช้แอป'} เสร็จเรียบร้อยแล้ว!`)
     setShowEQAssessment(false)
+    
+    // Trigger refresh of assessment dashboard
+    setAssessmentRefreshTrigger(prev => prev + 1)
   }
 
   if (loading) {
@@ -599,6 +603,7 @@ const HomePage: React.FC = () => {
         <AssessmentDashboard
           onStartAssessment={handleStartAssessment}
           onClose={() => setShowAssessmentDashboard(false)}
+          refreshTrigger={assessmentRefreshTrigger}
         />
       )}
 

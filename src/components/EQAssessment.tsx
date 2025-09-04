@@ -115,9 +115,7 @@ export const EQAssessment: React.FC<Props> = ({ type, onComplete, onClose }) => 
         completedAt: new Date()
       }
 
-      console.log('Setting results:', savedAssessment)
       setResults(savedAssessment)
-      console.log('Setting step to results')
       setCurrentStep('results')
       onComplete(savedAssessment)
     } catch (error: any) {
@@ -148,9 +146,7 @@ export const EQAssessment: React.FC<Props> = ({ type, onComplete, onClose }) => 
         completedAt: new Date()
       }
       
-      console.log('Setting local results (after error):', localAssessment)
       setResults(localAssessment)
-      console.log('Setting step to results (after error)')
       setCurrentStep('results')
     } finally {
       setLoading(false)
@@ -327,15 +323,29 @@ export const EQAssessment: React.FC<Props> = ({ type, onComplete, onClose }) => 
   )
 
   const renderResults = () => {
-    console.log('renderResults called, results:', results)
     if (!results) {
-      console.log('No results available')
-      return null
+      return (
+        <div className="p-6 text-center">
+          <div className="text-red-500 mb-4">
+            <AlertCircle className="w-16 h-16 mx-auto mb-2" />
+            <h3 className="text-lg font-medium">ไม่พบผลการประเมิน</h3>
+            <p className="text-sm text-gray-600">กรุณาลองทำแบบประเมินใหม่</p>
+          </div>
+          <button
+            onClick={() => {
+              setCurrentStep('intro')
+              setCurrentQuestionIndex(0)
+              setResponses([])
+            }}
+            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+          >
+            ทำแบบประเมินใหม่
+          </button>
+        </div>
+      )
     }
 
-    console.log('Generating report for results:', results)
     const report = eqAssessmentService.generateReport(results)
-    console.log('Generated report:', report)
 
     return (
       <div className="p-6">
@@ -438,7 +448,6 @@ export const EQAssessment: React.FC<Props> = ({ type, onComplete, onClose }) => 
         </div>
 
         {/* Content */}
-        {console.log('Current step:', currentStep)}
         {currentStep === 'intro' && renderIntro()}
         {currentStep === 'questions' && renderQuestions()}
         {currentStep === 'results' && renderResults()}

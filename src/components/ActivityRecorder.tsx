@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Play, Pause, Square, Camera, Mic, Clock, ChevronLeft, Search, Filter, Star, Upload, Image, Video, X, Award, CheckCircle, TrendingUp, Trophy, Zap, Plus, Edit3, Heart, Book, Gamepad2 } from 'lucide-react'
+import { Play, Pause, Square, Camera, Mic, Clock, ChevronLeft, Search, Filter, Star, Upload, Image, Video, X, Plus, Edit3, Heart, Book, Gamepad2 } from 'lucide-react'
 import { createMediaRecorder } from '../utils/mediaRecorder'
 import { requestMicrophonePermission, requestCameraPermission } from '../utils/permissions'
 import { activityTemplates, activityCategories, ActivityTemplate } from '../data/activities'
@@ -14,7 +14,7 @@ interface Props {
 
 export const ActivityRecorder: React.FC<Props> = ({ onActivityComplete, onClose, preSelectedActivity }) => {
   const { currentUser } = useAuth()
-  const [currentStep, setCurrentStep] = useState<'categories' | 'activities' | 'recording' | 'results' | 'custom'>('categories')
+  const [currentStep, setCurrentStep] = useState<'categories' | 'activities' | 'recording' | 'custom'>('categories')
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [selectedActivity, setSelectedActivity] = useState<ActivityTemplate | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
@@ -181,31 +181,36 @@ export const ActivityRecorder: React.FC<Props> = ({ onActivityComplete, onClose,
         }
         
         setActivityResult(result)
-        setCurrentStep('results')
+        
+        // Automatically complete activity and close modal instead of showing results step
+        onActivityComplete(result)
+        
+        // Clean up object URLs immediately
+        uploadPreviews.forEach(url => URL.revokeObjectURL(url))
+        
+        // Reset state for next use
+        setCurrentStep('categories')
+        setSelectedCategory(null)
+        setSelectedActivity(null)
+        setRecordingType(null)
+        setDuration(0)
+        setUploadedFiles([])
+        setUploadPreviews([])
+        setActivityResult(null)
+        setCustomActivity({
+          name: '',
+          description: '',
+          category: 'อื่นๆ',
+          difficulty: 'easy',
+          minDuration: 5 * 60,
+          points: 10
+        })
       }
     } catch (error) {
       console.error('Error stopping recording:', error)
     }
   }
 
-  const handleCompleteActivity = () => {
-    if (activityResult) {
-      onActivityComplete(activityResult)
-      
-      // Clean up object URLs
-      uploadPreviews.forEach(url => URL.revokeObjectURL(url))
-      
-      // Reset state
-      setCurrentStep('categories')
-      setSelectedCategory(null)
-      setSelectedActivity(null)
-      setRecordingType(null)
-      setDuration(0)
-      setUploadedFiles([])
-      setUploadPreviews([])
-      setActivityResult(null)
-    }
-  }
 
   const filteredActivities = activityTemplates.filter(activity => {
     const matchesCategory = !selectedCategory || activity.category === selectedCategory
@@ -530,158 +535,6 @@ export const ActivityRecorder: React.FC<Props> = ({ onActivityComplete, onClose,
     </div>
   )
 
-  const renderResultsStep = () => {
-    if (!activityResult || !selectedActivity) return null
-
-    const formatTime = (seconds: number) => {
-      const mins = Math.floor(seconds / 60)
-      const secs = seconds % 60
-      return `${mins} นาที ${secs} วินาที`
-    }
-
-    const getDifficultyColor = (difficulty: string) => {
-      switch (difficulty) {
-        case 'easy': return 'bg-green-100 text-green-800'
-        case 'medium': return 'bg-yellow-100 text-yellow-800'
-        case 'hard': return 'bg-red-100 text-red-800'
-        default: return 'bg-gray-100 text-gray-800'
-      }
-    }
-
-    const getDifficultyText = (difficulty: string) => {
-      switch (difficulty) {
-        case 'easy': return 'ง่าย'
-        case 'medium': return 'ปานกลาง'
-        case 'hard': return 'ยาก'
-        default: return 'ไม่ระบุ'
-      }
-    }
-
-    return (
-      <div className="space-y-4">
-        <div className="text-center mb-6">
-          <div className="bg-green-100 p-4 rounded-full w-20 h-20 mx-auto mb-4 flex items-center justify-center">
-            <CheckCircle className="w-10 h-10 text-green-600" />
-          </div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">เยี่ยมมาก!</h2>
-          <p className="text-gray-600">คุณได้ทำกิจกรรมเสร็จเรียบร้อยแล้ว</p>
-        </div>
-
-        {/* Activity Summary */}
-        <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-6 rounded-lg mb-4">
-          <div className="flex items-center mb-3">
-            <selectedActivity.icon className="w-8 h-8 mr-3" />
-            <div>
-              <h3 className="text-lg font-bold">{activityResult.name}</h3>
-              <p className="text-sm opacity-90">{selectedActivity.category}</p>
-            </div>
-          </div>
-          <p className="text-sm opacity-90">{selectedActivity.description}</p>
-        </div>
-
-        {/* Points Earned */}
-        <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center">
-              <Trophy className="w-6 h-6 text-yellow-600 mr-2" />
-              <span className="font-bold text-gray-800">แต้มที่ได้รับ</span>
-            </div>
-            <div className="text-2xl font-bold text-yellow-600">
-              {activityResult.points} แต้ม
-            </div>
-          </div>
-          
-          {activityResult.bonusMultiplier > 1 && (
-            <div className="text-sm text-gray-600">
-              <div className="flex justify-between">
-                <span>แต้มพื้นฐาน:</span>
-                <span>{activityResult.basePoints} แต้ม</span>
-              </div>
-              <div className="flex justify-between">
-                <span>โบนัส (x{activityResult.bonusMultiplier}):</span>
-                <span>+{activityResult.points - activityResult.basePoints} แต้ม</span>
-              </div>
-              <hr className="my-1" />
-              <div className="flex justify-between font-medium">
-                <span>รวม:</span>
-                <span>{activityResult.points} แต้ม</span>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Activity Details */}
-        <div className="space-y-3">
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
-            <h4 className="font-medium text-gray-800 mb-3">สรุปกิจกรรม</h4>
-            
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-600">เวลาที่ใช้:</span>
-                <span className="font-medium">{formatTime(activityResult.duration)}</span>
-              </div>
-              
-              <div className="flex justify-between">
-                <span className="text-gray-600">ระดับความยาก:</span>
-                <span className={`px-2 py-1 rounded text-xs ${getDifficultyColor(activityResult.difficulty)}`}>
-                  {getDifficultyText(activityResult.difficulty)}
-                </span>
-              </div>
-
-              {activityResult.recordingType && (
-                <div className="flex justify-between">
-                  <span className="text-gray-600">ประเภทการบันทึก:</span>
-                  <span className="font-medium">
-                    {activityResult.recordingType === 'audio' ? '🎵 เสียง' : '🎥 วิดีโอ'}
-                  </span>
-                </div>
-              )}
-
-              {activityResult.uploadedFiles && activityResult.uploadedFiles.length > 0 && (
-                <div className="flex justify-between">
-                  <span className="text-gray-600">ไฟล์ที่อัปโหลด:</span>
-                  <span className="font-medium">{activityResult.uploadedFiles.length} ไฟล์</span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Bonus Achievement */}
-          {activityResult.bonusMultiplier > 1 && (
-            <div className="bg-gradient-to-r from-orange-400 to-pink-500 text-white p-4 rounded-lg">
-              <div className="flex items-center mb-2">
-                <Zap className="w-5 h-5 mr-2" />
-                <span className="font-bold">โบนัสพิเศษ!</span>
-              </div>
-              <p className="text-sm opacity-90">
-                {activityResult.duration >= selectedActivity.minDuration 
-                  ? `คุณทำกิจกรรมครบเวลาที่กำหนด (${Math.floor(selectedActivity.minDuration / 60)} นาที)`
-                  : 'คุณได้อัปโหลดไฟล์ประกอบกิจกรรม'}
-                {' '}ได้รับโบนัสแต้ม x{activityResult.bonusMultiplier}!
-              </p>
-            </div>
-          )}
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex space-x-3 mt-6">
-          <button
-            onClick={() => setCurrentStep('categories')}
-            className="flex-1 bg-gray-300 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-400 transition-colors"
-          >
-            ทำกิจกรรมอื่น
-          </button>
-          <button
-            onClick={handleCompleteActivity}
-            className="flex-1 bg-green-500 text-white py-3 px-4 rounded-lg font-medium hover:bg-green-600 transition-colors flex items-center justify-center"
-          >
-            <CheckCircle className="w-5 h-5 mr-2" />
-            เสร็จสิ้น
-          </button>
-        </div>
-      </div>
-    )
-  }
 
   const renderCustomStep = () => {
     const handleCreateCustomActivity = () => {
@@ -858,18 +711,15 @@ export const ActivityRecorder: React.FC<Props> = ({ onActivityComplete, onClose,
         {currentStep === 'categories' && renderCategoriesStep()}
         {currentStep === 'activities' && renderActivitiesStep()}
         {currentStep === 'recording' && renderRecordingStep()}
-        {currentStep === 'results' && renderResultsStep()}
         {currentStep === 'custom' && renderCustomStep()}
 
-        {/* Close button - only show when not on results step */}
-        {currentStep !== 'results' && (
-          <button
-            onClick={onClose}
-            className="w-full mt-6 bg-gray-500 text-white p-2 rounded hover:bg-gray-600 transition-colors"
-          >
-            ปิด
-          </button>
-        )}
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          className="w-full mt-6 bg-gray-500 text-white p-2 rounded hover:bg-gray-600 transition-colors"
+        >
+          ปิด
+        </button>
       </div>
     </div>
   )
