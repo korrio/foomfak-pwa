@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { ChildProfile } from '../types'
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { storage } from '../firebase/config'
+import { offlinePhotoService } from '../services/offlinePhotoService'
 
 interface Props {
   onComplete: () => void
@@ -43,13 +44,24 @@ export const OnboardingModal: React.FC<Props> = ({ onComplete, onClose }) => {
   const handlePhotoUpload = async (file: File): Promise<string> => {
     if (!currentUser) throw new Error('No authenticated user')
     
-    const fileExtension = file.name.split('.').pop()
-    const fileName = `child-photos/${currentUser.uid}/${Date.now()}.${fileExtension}`
-    const storageRef = ref(storage, fileName)
-    
-    const snapshot = await uploadBytes(storageRef, file)
-    const downloadURL = await getDownloadURL(snapshot.ref)
-    return downloadURL
+    try {
+      // Use offline photo service for better persistence
+      const result = await offlinePhotoService.savePhotoWithFallback(file, currentUser.uid, 'child')
+      
+      // Return Firebase URL if available, otherwise local URL
+      return result.firebaseUrl || result.localUrl
+    } catch (error) {
+      console.error('Photo upload failed, falling back to direct Firebase upload:', error)
+      
+      // Fallback to original Firebase upload method
+      const fileExtension = file.name.split('.').pop()
+      const fileName = `child-photos/${currentUser.uid}/${Date.now()}.${fileExtension}`
+      const storageRef = ref(storage, fileName)
+      
+      const snapshot = await uploadBytes(storageRef, file)
+      const downloadURL = await getDownloadURL(snapshot.ref)
+      return downloadURL
+    }
   }
 
   const handlePhotoSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
