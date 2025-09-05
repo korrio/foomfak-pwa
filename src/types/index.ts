@@ -39,6 +39,8 @@ export interface Activity {
   location?: string
   timestamp: Date
   status: 'completed' | 'in_progress' | 'verified'
+  recordingType?: 'audio' | 'video' | 'image'
+  uploadedFiles?: { url: string; name: string; type: string; size: number }[]
 }
 
 export type ActivityType = 

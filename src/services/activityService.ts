@@ -7,6 +7,7 @@ import {
   getDocs, 
   updateDoc, 
   doc,
+  getDoc,
   serverTimestamp 
 } from 'firebase/firestore'
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
@@ -142,7 +143,7 @@ export const activityService = {
   },
 
   // Upload multiple files (photos/videos)
-  async uploadMultipleFiles(files: File[], userId: string, activityId: string): Promise<string[]> {
+  async uploadMultipleFiles(files: File[], userId: string, activityId: string): Promise<{ url: string; name: string; type: string; size: number }[]> {
     const uploadPromises = files.map(async (file, index) => {
       const fileExtension = file.name.split('.').pop() || 'jpg'
       const fileName = `activities/${userId}/${activityId}_${index}.${fileExtension}`
@@ -150,16 +151,22 @@ export const activityService = {
       
       const snapshot = await uploadBytes(storageRef, file)
       const downloadURL = await getDownloadURL(snapshot.ref)
-      return downloadURL
+      
+      return {
+        url: downloadURL,
+        name: file.name,
+        type: file.type,
+        size: file.size
+      }
     })
 
     try {
-      const urls = await Promise.all(uploadPromises)
-      return urls
+      const uploadResults = await Promise.all(uploadPromises)
+      return uploadResults
     } catch (error) {
       console.error('Failed to upload some files:', error)
       // Try to upload individually and return successful ones
-      const results: string[] = []
+      const results: { url: string; name: string; type: string; size: number }[] = []
       for (let i = 0; i < files.length; i++) {
         try {
           const file = files[i]
@@ -169,7 +176,12 @@ export const activityService = {
           
           const snapshot = await uploadBytes(storageRef, file)
           const downloadURL = await getDownloadURL(snapshot.ref)
-          results.push(downloadURL)
+          results.push({
+            url: downloadURL,
+            name: file.name,
+            type: file.type,
+            size: file.size
+          })
         } catch (fileError) {
           console.error(`Failed to upload file ${files[i].name}:`, fileError)
         }
@@ -186,7 +198,7 @@ export const activityService = {
   },
 
   // Update activity with multiple media URLs
-  async updateActivityMultipleMedia(activityId: string, mediaUrls: string[], recordedMediaUrl?: string): Promise<void> {
+  async updateActivityMultipleMedia(activityId: string, mediaUrls: { url: string; name: string; type: string; size: number }[], recordedMediaUrl?: string): Promise<void> {
     const updateData: any = {}
     
     if (recordedMediaUrl) {
@@ -239,7 +251,7 @@ export const activityService = {
     const activityId = await this.createActivity(activityData)
     
     let mediaUrl: string | undefined
-    let uploadedFileUrls: string[] = []
+    let uploadedFileUrls: { url: string; name: string; type: string; size: number }[] = []
     
     // Upload recorded media if provided
     if (mediaFile) {
@@ -271,5 +283,25 @@ export const activityService = {
       uploadedFiles: uploadedFileUrls,
       timestamp: new Date()
     } as Activity
+  },
+
+  // Get user profile data
+  async getUserProfile(userId: string) {
+    try {
+      const userDoc = await getDoc(doc(db, 'users', userId))
+      if (userDoc.exists()) {
+        const userData = userDoc.data()
+        return {
+          name: userData.name || userData.displayName || 'ผู้ปกครอง',
+          childProfile: userData.childProfile || null,
+          childName: userData.childName || null,
+          childAge: userData.childAge || null
+        }
+      }
+      return null
+    } catch (error) {
+      console.error('Failed to get user profile:', error)
+      return null
+    }
   }
 }

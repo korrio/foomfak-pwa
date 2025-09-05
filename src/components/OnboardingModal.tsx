@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { X, User, Baby, Heart, CheckCircle, Calendar, Scale, Camera, Upload } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { ChildProfile } from '../types'
@@ -24,10 +24,22 @@ export const OnboardingModal: React.FC<Props> = ({ onComplete, onClose }) => {
     birthDate: userData?.childProfile?.birthDate ? new Date(userData.childProfile.birthDate) : new Date(),
     weight: userData?.childProfile?.weight || 0,
     gender: userData?.childProfile?.gender || 'male' as 'male' | 'female',
-    photoUrl: userData?.childProfile?.photoUrl || ''
+    photoUrl: (userData?.childProfile?.photoUrl && !userData.childProfile.photoUrl.startsWith('blob:')) 
+      ? userData.childProfile.photoUrl 
+      : ''
   })
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
   const [photoFile, setPhotoFile] = useState<File | null>(null)
+  const [previewUrl, setPreviewUrl] = useState<string>('')
+
+  // Cleanup blob URL when component unmounts
+  useEffect(() => {
+    return () => {
+      if (previewUrl && previewUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(previewUrl)
+      }
+    }
+  }, [previewUrl])
 
   const calculateAge = (birthDate: Date): number => {
     const today = new Date()
@@ -82,9 +94,9 @@ export const OnboardingModal: React.FC<Props> = ({ onComplete, onClose }) => {
 
     setPhotoFile(file)
     
-    // Create preview URL
-    const previewUrl = URL.createObjectURL(file)
-    setChildProfile(prev => ({ ...prev, photoUrl: previewUrl }))
+    // Create preview URL but don't store it in profile
+    const newPreviewUrl = URL.createObjectURL(file)
+    setPreviewUrl(newPreviewUrl)
   }
 
   const handleNext = () => {
@@ -284,9 +296,9 @@ export const OnboardingModal: React.FC<Props> = ({ onComplete, onClose }) => {
           </label>
           <div className="flex flex-col items-center">
             <div className="w-24 h-24 border-2 border-dashed border-gray-300 rounded-full flex items-center justify-center mb-3 overflow-hidden">
-              {childProfile.photoUrl ? (
+              {(previewUrl || childProfile.photoUrl) ? (
                 <img 
-                  src={childProfile.photoUrl} 
+                  src={previewUrl || childProfile.photoUrl} 
                   alt="Child preview" 
                   className="w-full h-full object-cover"
                 />
@@ -306,7 +318,7 @@ export const OnboardingModal: React.FC<Props> = ({ onComplete, onClose }) => {
               className="cursor-pointer bg-purple-50 text-purple-700 px-4 py-2 rounded-lg text-sm hover:bg-purple-100 transition-colors flex items-center"
             >
               <Upload className="w-4 h-4 mr-2" />
-              {childProfile.photoUrl ? 'เปลี่ยนรูป' : 'เลือกรูปภาพ'}
+              {(previewUrl || childProfile.photoUrl) ? 'เปลี่ยนรูป' : 'เลือกรูปภาพ'}
             </label>
             <p className="text-xs text-gray-500 mt-1 text-center">
               รองรับไฟล์ JPG, PNG ขนาดไม่เกิน 5MB

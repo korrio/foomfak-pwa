@@ -108,7 +108,7 @@ class OfflineActivityService {
     category: string
     difficulty: 'easy' | 'medium' | 'hard'
     duration: number
-    recordingType?: 'audio' | 'video'
+    recordingType?: 'audio' | 'video' | 'image'
     blob?: Blob
     uploadedFiles?: File[]
     userId: string

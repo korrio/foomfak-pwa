@@ -21,7 +21,7 @@ export const ActivityRecorder: React.FC<Props> = ({ onActivityComplete, onClose,
   const [selectedActivity, setSelectedActivity] = useState<ActivityTemplate | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [isRecording, setIsRecording] = useState(false)
-  const [recordingType, setRecordingType] = useState<'audio' | 'video' | null>(null)
+  const [recordingType, setRecordingType] = useState<'audio' | 'video' | 'image' | null>(null)
   const [duration, setDuration] = useState(0)
   const [mediaRecorder, setMediaRecorder] = useState(createMediaRecorder())
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([])
@@ -161,6 +161,23 @@ export const ActivityRecorder: React.FC<Props> = ({ onActivityComplete, onClose,
           // Continue with calculation even if limit check fails
         }
         
+        // Determine recordingType based on content
+        let finalRecordingType = recordingType
+        if (!finalRecordingType && uploadedFiles.length > 0) {
+          // Check if any uploaded file is an image
+          const hasImages = uploadedFiles.some(file => file.type.startsWith('image/'))
+          const hasVideos = uploadedFiles.some(file => file.type.startsWith('video/'))
+          const hasAudio = uploadedFiles.some(file => file.type.startsWith('audio/'))
+          
+          if (hasImages) {
+            finalRecordingType = 'image'
+          } else if (hasVideos) {
+            finalRecordingType = 'video'
+          } else if (hasAudio) {
+            finalRecordingType = 'audio'
+          }
+        }
+
         // Save activity using offline service
         const savedActivity = await offlineActivityService.saveActivity({
           activityId: selectedActivity.id,
@@ -170,7 +187,7 @@ export const ActivityRecorder: React.FC<Props> = ({ onActivityComplete, onClose,
           category: selectedActivity.category,
           difficulty: selectedActivity.difficulty,
           duration,
-          recordingType,
+          recordingType: finalRecordingType,
           blob,
           uploadedFiles,
           userId: currentUser.uid
