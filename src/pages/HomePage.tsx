@@ -16,6 +16,7 @@ import { EQAssessment } from '../components/EQAssessment'
 import { AssessmentDashboard } from '../components/AssessmentDashboard'
 import NotificationSettings from '../components/NotificationSettings'
 import InstallPWA from '../components/InstallPWA'
+import ParentingFeed from '../components/ParentingFeed'
 import { versionService } from '../services/versionService'
 import { 
   Play, 
@@ -50,6 +51,7 @@ const HomePage: React.FC = () => {
   const [showEQAssessment, setShowEQAssessment] = useState(false)
   const [showAssessmentDashboard, setShowAssessmentDashboard] = useState(false)
   const [showNotificationSettings, setShowNotificationSettings] = useState(false)
+  const [showParentingFeed, setShowParentingFeed] = useState(false)
   const [assessmentType, setAssessmentType] = useState<'pre-test' | 'post-test'>('pre-test')
   const [activities, setActivities] = useState<Activity[]>([])
   const [challenges, setChallenges] = useState<(Challenge & { currentValue?: number })[]>([])
@@ -269,9 +271,10 @@ const HomePage: React.FC = () => {
       notificationService.notifyActivityComplete(activityData.name, activityData.points + bonusPoints)
       showNotification(message)
       
-      // Close modal and clear pre-selected activity
+      // Close modal and clear pre-selected activity, then open ParentingFeed
       setShowActivityRecorder(false)
       setPreSelectedActivity(null)
+      setShowParentingFeed(true)
     } catch (error) {
       console.error('Failed to save activity:', error)
       showNotification('ไม่สามารถบันทึกกิจกรรมได้ กรุณาลองใหม่')
@@ -441,13 +444,22 @@ const HomePage: React.FC = () => {
               <span>{userData?.streak || 0} วัน</span>
             </div>
           </div>
-          <button
-            onClick={() => setShowRewardsMarketplace(true)}
-            className="w-full bg-white bg-opacity-20 text-white px-4 py-2 rounded-lg font-medium hover:bg-opacity-30 transition-all flex items-center justify-center"
-          >
-            <Gift className="w-5 h-5 mr-2" />
-            ร้านแลกรางวัล
-          </button>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              onClick={() => setShowRewardsMarketplace(true)}
+              className="bg-white bg-opacity-20 text-white px-4 py-2 rounded-lg font-medium hover:bg-opacity-30 transition-all flex items-center justify-center"
+            >
+              <Gift className="w-5 h-5 mr-2" />
+              ร้านแลกรางวัล
+            </button>
+            <button
+              onClick={() => setShowParentingFeed(true)}
+              className="bg-white bg-opacity-20 text-white px-4 py-2 rounded-lg font-medium hover:bg-opacity-30 transition-all flex items-center justify-center"
+            >
+              <History className="w-5 h-5 mr-2" />
+              บันทึกการเลี้ยงดู
+            </button>
+          </div>
         </div>
 
 
@@ -615,9 +627,12 @@ const HomePage: React.FC = () => {
                 </div>
               ))}
               {activities.length > 5 && (
-                <p className="text-center text-gray-500 text-sm">
-                  และอีก {activities.length - 5} กิจกรรม
-                </p>
+                <button
+                  onClick={() => setShowParentingFeed(true)}
+                  className="w-full text-center text-blue-500 hover:text-blue-700 text-sm font-medium py-2 hover:bg-blue-50 rounded transition-colors"
+                >
+                  และอีก {activities.length - 5} กิจกรรม ดูทั้งหมด →
+                </button>
               )}
             </div>
           ) : (
@@ -715,6 +730,11 @@ const HomePage: React.FC = () => {
             <NotificationSettings onClose={() => setShowNotificationSettings(false)} />
           </div>
         </div>
+      )}
+
+      {/* Parenting Feed Modal */}
+      {showParentingFeed && (
+        <ParentingFeed onClose={() => setShowParentingFeed(false)} />
       )}
       </div>
     </div>

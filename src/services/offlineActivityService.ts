@@ -230,7 +230,7 @@ class OfflineActivityService {
       }
 
       // Attempt to save to Firebase
-      await firebaseActivityService.saveActivity(firebaseActivity)
+      await firebaseActivityService.createActivity(firebaseActivity)
       
       // Mark as synced in offline storage
       await offlineStorage.markAsSynced('activities', activity.id)

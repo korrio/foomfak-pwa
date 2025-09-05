@@ -237,7 +237,7 @@ export const ActivityRecorder: React.FC<Props> = ({ onActivityComplete, onClose,
         </div>
         <button
           onClick={onClose}
-          className="absolute top-0 right-0 p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-colors"
+          className="hidden absolute top-0 right-0 p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-colors"
         >
           <X className="w-5 h-5" />
         </button>
@@ -498,8 +498,8 @@ export const ActivityRecorder: React.FC<Props> = ({ onActivityComplete, onClose,
             <label className="w-full bg-purple-500 text-white p-4 rounded-lg flex items-center justify-center hover:bg-purple-600 transition-colors cursor-pointer">
               <Camera className="w-6 h-6 mr-3" />
               <div className="text-left">
-                <div className="font-medium">อัปโหลดไฟล์</div>
-                <div className="text-sm opacity-80">รูปภาพหรือวิดีโอ (สูงสุด 5 ไฟล์)</div>
+                <div className="font-medium">อัปโหลดรูปภาพหรือวิดีโอ</div>
+                <div className="text-sm opacity-80">สูงสุด 5 ไฟล์</div>
               </div>
               <input
                 type="file"
