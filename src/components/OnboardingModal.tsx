@@ -94,12 +94,18 @@ export const OnboardingModal: React.FC<Props> = ({ onComplete, onClose }) => {
     
     setLoading(true)
     try {
+      // Check if user has already received welcome bonus
+      const hasReceivedWelcomeBonus = userData?.welcomeBonusReceived || false
+      const bonusPoints = hasReceivedWelcomeBonus ? 0 : 100
+
       const updateData: any = {
         name: formData.name,
         role: formData.role,
-        points: (userData?.points || 0) + 100, // Add 100 welcome bonus to existing points
-        level: 1,
-        streak: 0
+        points: (userData?.points || 0) + bonusPoints, // Add welcome bonus only if not received before
+        level: userData?.level || 1,
+        streak: userData?.streak || 0,
+        welcomeBonusReceived: true, // Mark that user has received the welcome bonus
+        completedOnboarding: true
       }
 
       // Add child profile for parents
@@ -400,47 +406,58 @@ export const OnboardingModal: React.FC<Props> = ({ onComplete, onClose }) => {
     </div>
   )
 
-  const renderCompleteStep = () => (
-    <div className="text-center">
-      <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6">
-        <CheckCircle className="w-10 h-10 text-white" />
-      </div>
-      <h2 className="text-2xl font-bold text-gray-800 mb-4">ยินดีด้วย!</h2>
-      <p className="text-gray-600 mb-6">
-        คุณได้ตั้งค่าบัญชีเรียบร้อยแล้ว พร้อมเริ่มบันทึกกิจกรรมและสะสมแต้มกันเลย!
-      </p>
+  const renderCompleteStep = () => {
+    const hasReceivedWelcomeBonus = userData?.welcomeBonusReceived || false
 
-      <div className="bg-gradient-to-r from-yellow-400 to-orange-500 p-4 rounded-lg mb-6">
-        <h3 className="font-semibold text-white mb-2">🎉 โบนัสต้อนรับ</h3>
-        <p className="text-white text-sm">คุณได้รับ 100 แต้มฟรี เพื่อเริ่มต้นการใช้งาน</p>
-      </div>
+    return (
+      <div className="text-center">
+        <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6">
+          <CheckCircle className="w-10 h-10 text-white" />
+        </div>
+        <h2 className="text-2xl font-bold text-gray-800 mb-4">
+          {hasReceivedWelcomeBonus ? 'อัปเดตสำเร็จ!' : 'ยินดีด้วย!'}
+        </h2>
+        <p className="text-gray-600 mb-6">
+          {hasReceivedWelcomeBonus 
+            ? 'ข้อมูลโปรไฟล์ของคุณได้รับการอัปเดตเรียบร้อยแล้ว'
+            : 'คุณได้ตั้งค่าบัญชีเรียบร้อยแล้ว พร้อมเริ่มบันทึกกิจกรรมและสะสมแต้มกันเลย!'
+          }
+        </p>
 
-      <div className="bg-blue-50 p-4 rounded-lg mb-6">
-        <h3 className="font-semibold text-blue-800 mb-2">เริ่มต้นด้วย:</h3>
-        <ul className="text-sm text-blue-700 space-y-1">
-          <li>• บันทึกกิจกรรมแรกของคุณ</li>
-          <li>• ดูความท้าทายรายวัน</li>
-          <li>• เยี่ยมชมร้านแลกรางวัล</li>
-          <li>• ตั้งค่าการแจ้งเตือน</li>
-        </ul>
-      </div>
-
-      <button
-        onClick={handleComplete}
-        disabled={loading || uploadingPhoto}
-        className="w-full bg-gradient-to-r from-green-500 to-blue-600 text-white py-4 px-6 rounded-lg font-semibold hover:from-green-600 hover:to-blue-700 transition-all disabled:opacity-50"
-      >
-        {loading || uploadingPhoto ? (
-          <div className="flex items-center justify-center">
-            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-            {uploadingPhoto ? 'กำลังอัพโหลดรูปภาพ...' : 'กำลังดำเนินการ...'}
+        {!hasReceivedWelcomeBonus && (
+          <div className="bg-gradient-to-r from-yellow-400 to-orange-500 p-4 rounded-lg mb-6">
+            <h3 className="font-semibold text-white mb-2">🎉 โบนัสต้อนรับ</h3>
+            <p className="text-white text-sm">คุณได้รับ 100 แต้มฟรี เพื่อเริ่มต้นการใช้งาน</p>
           </div>
-        ) : (
-          'เริ่มใช้งานฟูมฟัก!'
         )}
-      </button>
-    </div>
-  )
+
+        <div className="bg-blue-50 p-4 rounded-lg mb-6">
+          <h3 className="font-semibold text-blue-800 mb-2">เริ่มต้นด้วย:</h3>
+          <ul className="text-sm text-blue-700 space-y-1">
+            <li>• บันทึกกิจกรรมแรกของคุณ</li>
+            <li>• ดูความท้าทายรายวัน</li>
+            <li>• เยี่ยมชมร้านแลกรางวัล</li>
+            <li>• ตั้งค่าการแจ้งเตือน</li>
+          </ul>
+        </div>
+
+        <button
+          onClick={handleComplete}
+          disabled={loading || uploadingPhoto}
+          className="w-full bg-gradient-to-r from-green-500 to-blue-600 text-white py-4 px-6 rounded-lg font-semibold hover:from-green-600 hover:to-blue-700 transition-all disabled:opacity-50"
+        >
+          {loading || uploadingPhoto ? (
+            <div className="flex items-center justify-center">
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+              {uploadingPhoto ? 'กำลังอัพโหลดรูปภาพ...' : 'กำลังดำเนินการ...'}
+            </div>
+          ) : (
+            'เริ่มใช้งานฟูมฟัก!'
+          )}
+        </button>
+      </div>
+    )
+  }
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">

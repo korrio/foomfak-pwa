@@ -15,18 +15,27 @@
     "firebase:deploy:hosting": "npm run build && firebase deploy --only hosting",
     "firebase:deploy:rules": "firebase deploy --only firestore:rules,storage"
   },
-  "keywords": ["pwa", "parenting", "mobile", "react", "typescript"],
+  "keywords": [
+    "pwa",
+    "parenting",
+    "mobile",
+    "react",
+    "typescript"
+  ],
   "author": "FoomFak Team",
   "license": "MIT",
   "dependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
     "firebase": "^10.7.1",
     "lucide-react": "^0.298.0",
+    "qrcode": "^1.5.4",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-qr-code": "^2.0.18",
     "react-router-dom": "^6.20.1",
     "workbox-window": "^7.0.0"
   },
   "devDependencies": {
+    "@types/qrcode": "^1.5.5",
     "@types/react": "^18.2.43",
     "@types/react-dom": "^18.2.17",
     "@typescript-eslint/eslint-plugin": "^6.14.0",

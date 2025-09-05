@@ -11,8 +11,10 @@ import {
   AlertCircle,
   Filter,
   Search,
-  TrendingUp
+  TrendingUp,
+  QrCode
 } from 'lucide-react'
+import QRCode from 'react-qr-code'
 import { useAuth } from '../contexts/AuthContext'
 import { offlineRewardService, UserRedemption } from '../services/offlineRewardService'
 import { rewards, rewardCategories, getRewardsByCategory, getPopularRewards, getAffordableRewards, Reward } from '../data/rewards'
@@ -352,34 +354,53 @@ export const RewardsMarketplace: React.FC<Props> = ({ onClose }) => {
         <div className="space-y-3">
           {redemptionHistory.map(redemption => (
             <div key={redemption.id} className="border border-gray-200 rounded-lg p-4">
-              <div className="flex items-start justify-between mb-2">
-                <div>
-                  <h4 className="font-medium">รางวัลที่แลก</h4>
-                  <p className="text-sm text-gray-600 mb-1">รหัส: {redemption.redemptionCode}</p>
-                </div>
-                <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(redemption.status)}`}>
-                  {getStatusText(redemption.status)}
-                </span>
-              </div>
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <p className="text-gray-500">แต้มที่ใช้</p>
-                  <p className="font-medium">{redemption.pointsUsed} แต้ม</p>
-                </div>
-                <div>
-                  <p className="text-gray-500">วันที่แลก</p>
-                  <p className="font-medium">{formatDate(redemption.redeemedAt)}</p>
-                </div>
-                <div>
-                  <p className="text-gray-500">หมดอายุ</p>
-                  <p className="font-medium">{formatDate(redemption.expiresAt)}</p>
-                </div>
-                {redemption.usedAt && (
-                  <div>
-                    <p className="text-gray-500">วันที่ใช้</p>
-                    <p className="font-medium">{formatDate(redemption.usedAt)}</p>
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex-1">
+                  <div className="flex items-start justify-between mb-2">
+                    <div>
+                      <h4 className="font-medium">{redemption.rewardTitle}</h4>
+                      <p className="text-sm text-gray-600 mb-1">รหัส: {redemption.redemptionCode}</p>
+                    </div>
+                    <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(redemption.status)}`}>
+                      {getStatusText(redemption.status)}
+                    </span>
                   </div>
-                )}
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <p className="text-gray-500">แต้มที่ใช้</p>
+                      <p className="font-medium">{redemption.pointsUsed} แต้ม</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500">วันที่แลก</p>
+                      <p className="font-medium">{formatDate(redemption.redeemedAt)}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500">หมดอายุ</p>
+                      <p className="font-medium">{formatDate(redemption.expiresAt)}</p>
+                    </div>
+                    {redemption.usedAt && (
+                      <div>
+                        <p className="text-gray-500">วันที่ใช้</p>
+                        <p className="font-medium">{formatDate(redemption.usedAt)}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                {/* QR Code */}
+                <div className="ml-4 flex-shrink-0">
+                  <div className="bg-white p-2 rounded-lg border border-gray-200 shadow-sm">
+                    <QRCode 
+                      value={redemption.redemptionCode} 
+                      size={80}
+                      style={{ height: "auto", maxWidth: "100%", width: "100%" }}
+                    />
+                  </div>
+                  <div className="text-center mt-1">
+                    <QrCode className="w-4 h-4 mx-auto text-gray-400" />
+                    <p className="text-xs text-gray-500">สแกนเพื่อใช้</p>
+                  </div>
+                </div>
               </div>
             </div>
           ))}

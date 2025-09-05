@@ -34,7 +34,10 @@ import {
   TrendingUp,
   Target,
   Gift,
-  Download
+  Download,
+  Wifi,
+  WifiOff,
+  RefreshCw
 } from 'lucide-react'
 
 const HomePage: React.FC = () => {
@@ -54,6 +57,8 @@ const HomePage: React.FC = () => {
   const [notification, setNotification] = useState('')
   const [loadingActivities, setLoadingActivities] = useState(false)
   const [assessmentRefreshTrigger, setAssessmentRefreshTrigger] = useState(0)
+  const [connectionStatus, setConnectionStatus] = useState<'online' | 'offline' | 'syncing'>('online')
+  const [isOnline, setIsOnline] = useState(navigator.onLine)
 
   useEffect(() => {
     if (currentUser && userData) {
@@ -147,6 +152,60 @@ const HomePage: React.FC = () => {
       }
     } catch (error) {
       console.error('Failed to setup notifications:', error)
+    }
+  }
+
+  // Monitor online/offline status
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true)
+      setConnectionStatus('online')
+    }
+    
+    const handleOffline = () => {
+      setIsOnline(false)
+      setConnectionStatus('offline')
+    }
+
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('offline', handleOffline)
+
+    // Initial status
+    setIsOnline(navigator.onLine)
+    setConnectionStatus(navigator.onLine ? 'online' : 'offline')
+
+    return () => {
+      window.removeEventListener('online', handleOnline)
+      window.removeEventListener('offline', handleOffline)
+    }
+  }, [])
+
+  const getConnectionStatusInfo = () => {
+    switch (connectionStatus) {
+      case 'online':
+        return {
+          text: 'Online',
+          icon: Wifi,
+          color: 'text-green-500'
+        }
+      case 'offline':
+        return {
+          text: 'Offline',
+          icon: WifiOff,
+          color: 'text-red-500'
+        }
+      case 'syncing':
+        return {
+          text: 'Syncing',
+          icon: RefreshCw,
+          color: 'text-blue-500 animate-spin'
+        }
+      default:
+        return {
+          text: 'Online',
+          icon: Wifi,
+          color: 'text-green-500'
+        }
     }
   }
 
@@ -319,7 +378,16 @@ const HomePage: React.FC = () => {
             />
             <div>
               <h1 className="text-2xl font-bold text-blue-600">ฟูมฟัก</h1>
-              <p className="text-xs text-gray-500">เชื่อมต่อ Firebase</p>
+              <div className="flex items-center">
+                <div className={`w-2 h-2 rounded-full mr-1 ${
+                  connectionStatus === 'online' ? 'bg-green-500' :
+                  connectionStatus === 'offline' ? 'bg-red-500' :
+                  'bg-blue-500'
+                }`}></div>
+                <p className={`text-xs ${getConnectionStatusInfo().color}`}>
+                  {getConnectionStatusInfo().text}
+                </p>
+              </div>
             </div>
           </div>
           <div className="flex items-center space-x-3">
@@ -601,15 +669,13 @@ const HomePage: React.FC = () => {
           onComplete={async () => {
             setShowOnboarding(false)
             
-            // Mark onboarding as completed (points are already updated in OnboardingModal)
-            if (currentUser && userData) {
-              await updateUserData({
-                onboardingCompleted: true,
-                lastActive: new Date()
-              })
-            }
+            // Check if user just received welcome bonus
+            const hasReceivedWelcomeBonusBefore = userData?.welcomeBonusReceived || false
+            const message = hasReceivedWelcomeBonusBefore 
+              ? 'ข้อมูลโปรไฟล์ได้รับการอัปเดตเรียบร้อยแล้ว!' 
+              : 'ยินดีต้อนรับสู่ฟูมฟัก! คุณได้รับโบนัสต้อนรับ 100 แต้ม 🎉'
             
-            showNotification('ยินดีต้อนรับสู่ฟูมฟัก! คุณได้รับโบนัสต้อนรับ 100 แต้ม 🎉')
+            showNotification(message)
           }}
           onClose={() => setShowOnboarding(false)}
         />
