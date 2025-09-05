@@ -129,7 +129,7 @@ const PublicJournalPage: React.FC = () => {
       {/* Journal Content */}
       <div className="max-w-4xl mx-auto p-4 relative z-10">
         {/* Family & Child Profile Section */}
-        <div className="mb-6 bg-white rounded-lg shadow-sm p-6">
+        <div className="mb-6 bg-white rounded-lg shadow-lg p-6">
           <div className="flex items-start space-x-6">
             {/* Child Profile */}
             {userProfile?.childProfile && (
