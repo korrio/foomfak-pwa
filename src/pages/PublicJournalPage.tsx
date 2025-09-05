@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom'
 import { activityService } from '../services/activityService'
 import { Activity } from '../types'
 import ActivityFeedDisplay from '../components/ActivityFeedDisplay'
-import { Share2, Baby, Calendar, Scale } from 'lucide-react'
+import { Share2, Baby, Calendar, Scale, ArrowLeft } from 'lucide-react'
 
 const PublicJournalPage: React.FC = () => {
   const { userId } = useParams<{ userId: string }>()
@@ -95,13 +95,22 @@ const PublicJournalPage: React.FC = () => {
       <div className="bg-white shadow-sm sticky top-0 z-10 relative">
         <div className="max-w-4xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
-            <div className="flex-1">
-              <h1 className="text-lg font-bold text-gray-800">
-                บันทึกการเลี้ยงดูของ {userProfile?.name || 'ผู้ปกครอง'}
-              </h1>
-              <p className="text-sm text-gray-500">
-                บันทึกสาธารณะ • {activities.length} กิจกรรม
-              </p>
+            <div className="flex items-center flex-1">
+              <button
+                onClick={() => window.history.back()}
+                className="text-gray-500 hover:text-gray-700 transition-colors mr-4"
+                title="กลับ"
+              >
+                <ArrowLeft className="w-6 h-6" />
+              </button>
+              <div className="flex-1">
+                <h1 className="text-lg font-bold text-gray-800">
+                  ฟูมฟัก 
+                </h1>
+                <p className="text-sm text-gray-500">
+                  กองทุนเพื่อความเสมอภาคทางการศึกษา (กสศ.)
+                </p>
+              </div>
             </div>
             
             <div className="flex items-center space-x-2">

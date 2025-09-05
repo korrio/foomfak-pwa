@@ -3,6 +3,7 @@ import { Activity } from '../types'
 import { useAuth } from '../contexts/AuthContext'
 import { 
   X, 
+  ArrowLeft,
   Calendar, 
   Clock, 
   Star, 
@@ -309,16 +310,17 @@ const ActivityFeedDisplay: React.FC<ActivityFeedDisplayProps> = ({
       <div className={contentClasses}>
         {/* Header */}
         {showHeader && (
-          <div className="flex items-center justify-between p-4 border-b border-gray-200">
-            <h2 className="text-xl font-bold text-gray-800">{title}</h2>
+          <div className="flex items-center p-4 border-b border-gray-200">
             {onClose && (
               <button
                 onClick={onClose}
-                className="text-gray-500 hover:text-gray-700 transition-colors"
+                className="text-gray-500 hover:text-gray-700 transition-colors mr-3"
+                title="กลับ"
               >
-                <X className="w-6 h-6" />
+                <ArrowLeft className="w-6 h-6" />
               </button>
             )}
+            <h2 className="text-xl font-bold text-gray-800">{title}</h2>
           </div>
         )}
 

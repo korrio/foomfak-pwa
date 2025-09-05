@@ -7,6 +7,7 @@ import {
   Tag, 
   ShoppingCart, 
   X, 
+  ArrowLeft,
   Check, 
   AlertCircle,
   Filter,
@@ -421,15 +422,16 @@ export const RewardsMarketplace: React.FC<Props> = ({ onClose }) => {
         <div className="bg-gradient-to-r from-purple-500 to-pink-500 text-white p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
+              <button
+                onClick={onClose}
+                className="text-white hover:bg-white hover:bg-opacity-20 p-2 rounded-full transition-colors mr-2"
+                title="กลับ"
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </button>
               <Gift className="w-6 h-6 mr-3" />
               <h2 className="text-xl font-bold">ร้านแลกรางวัล</h2>
             </div>
-            <button
-              onClick={onClose}
-              className="text-white hover:bg-white hover:bg-opacity-20 p-2 rounded-full transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
           </div>
           
           {/* Tabs */}

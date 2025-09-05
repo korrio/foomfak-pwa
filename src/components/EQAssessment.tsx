@@ -9,6 +9,7 @@ import {
 } from '../data/eqQuestionnaire'
 import { 
   X, 
+  ArrowLeft,
   ChevronRight, 
   ChevronLeft, 
   CheckCircle, 
@@ -425,16 +426,17 @@ export const EQAssessment: React.FC<Props> = ({ type, onComplete, onClose }) => 
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg w-full max-w-2xl max-h-screen overflow-y-auto mx-4">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b">
+        <div className="flex items-center p-4 border-b">
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700 p-2 rounded-full hover:bg-gray-100 mr-3"
+            title="กลับ"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
           <h1 className="text-lg font-bold text-gray-800">
             แบบประเมิน EQ {type === 'pre-test' ? 'ก่อนใช้แอป' : 'หลังใช้แอป'}
           </h1>
-          <button
-            onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 p-2 rounded-full hover:bg-gray-100"
-          >
-            <X className="w-5 h-5" />
-          </button>
         </div>
 
         {/* Content */}

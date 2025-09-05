@@ -4,6 +4,7 @@ import { offlineEQAssessmentService } from '../services/offlineEQAssessmentServi
 import { EQAssessment as EQAssessmentType } from '../data/eqQuestionnaire'
 import { 
   X, 
+  ArrowLeft,
   FileText, 
   TrendingUp, 
   Calendar, 
@@ -225,17 +226,18 @@ export const AssessmentDashboard: React.FC<Props> = ({ onStartAssessment, onClos
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg w-full max-w-2xl max-h-screen overflow-y-auto mx-4">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b">
+        <div className="flex items-center p-6 border-b">
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700 p-2 rounded-full hover:bg-gray-100 mr-4"
+            title="กลับ"
+          >
+            <ArrowLeft className="w-6 h-6" />
+          </button>
           <div>
             <h1 className="text-xl font-bold text-gray-800">แบบประเมินความฉลาดทางอารมณ์</h1>
             <p className="text-gray-600 text-sm">ติดตามพัฒนาการของลูกก่อนและหลังใช้แอป</p>
           </div>
-          <button
-            onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 p-2 rounded-full hover:bg-gray-100"
-          >
-            <X className="w-6 h-6" />
-          </button>
         </div>
 
         {loading ? (
