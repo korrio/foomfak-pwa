@@ -895,7 +895,7 @@ useQuota: (userId: number, amount: number, storeId: number) => {
   // Home Tab
   const HomeTab = () => (
     <div className="p-4">
-      <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-6 rounded-lg mb-6">
+      <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-6 rounded-lg mb-6">
         <h1 className="text-2xl font-bold mb-2">ยินดีต้อนรับสู่ ฟูมฟัก!</h1>
         <p className="text-sm mb-2">ดูแลลูกวัยปฐมวัยของพ่อแม่วัยรุ่นที่เป็นเยาวชนนอกระบบการศึกษา</p>
         
@@ -930,7 +930,7 @@ useQuota: (userId: number, amount: number, storeId: number) => {
         <div className="space-y-4">
           {(currentUser as any)?.role === 'parent' && (
             <>
-              <div className="bg-gradient-to-r from-pink-500 to-purple-600 text-white rounded-lg p-6 mb-4">
+              <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg p-6 mb-4">
                 <h3 className="font-bold text-lg mb-2">บันทึกกิจกรรมลูก</h3>
                 <p className="text-sm mb-4 opacity-90">
                   บันทึกกิจกรรมการดูแลลูก ได้แต้มและเงินรางวัล!
@@ -983,7 +983,7 @@ useQuota: (userId: number, amount: number, storeId: number) => {
           )}
 
           {(currentUser as any)?.role === 'admin' && (
-            <div className="bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-lg p-6 mb-4">
+            <div className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg p-6 mb-4">
               <h3 className="font-bold text-lg mb-2">ระบบจัดการ CMS</h3>
               <p className="text-sm mb-4 opacity-90">
                 จัดการเนื้อหา ผู้ใช้งาน และรางวัลในแอป

@@ -419,7 +419,7 @@ export const RewardsMarketplace: React.FC<Props> = ({ onClose }) => {
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg w-full max-w-4xl max-h-screen overflow-hidden mx-4">
         {/* Header */}
-        <div className="bg-gradient-to-r from-purple-500 to-pink-500 text-white p-4">
+        <div className="bg-gradient-to-r from-blue-500 to-blue-500 text-white p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
               <button
