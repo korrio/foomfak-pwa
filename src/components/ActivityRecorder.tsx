@@ -5,6 +5,7 @@ import { requestMicrophonePermission, requestCameraPermission } from '../utils/p
 import { activityTemplates, activityCategories, ActivityTemplate } from '../data/activities'
 import { offlineActivityService } from '../services/offlineActivityService'
 import { notificationService } from '../services/notificationService'
+import WaveAnimation, { PulseWaveAnimation } from './WaveAnimation'
 import { useAuth } from '../contexts/AuthContext'
 
 interface Props {
@@ -414,6 +415,40 @@ export const ActivityRecorder: React.FC<Props> = ({ onActivityComplete, onClose,
           <span className="text-2xl font-mono">{formatTime(duration)}</span>
         </div>
         
+        {/* Wave Animation for Audio Recording */}
+        {isRecording && recordingType === 'audio' && (
+          <div className="flex items-center justify-center mb-3">
+            <div className="flex items-center space-x-3">
+              <PulseWaveAnimation 
+                isRecording={isRecording && recordingType === 'audio'} 
+                size="small"
+                color="#ef4444" // red-500 for recording
+              />
+              <WaveAnimation 
+                isRecording={isRecording && recordingType === 'audio'} 
+                size="medium"
+                color="#ef4444" // red-500 for recording
+              />
+              <PulseWaveAnimation 
+                isRecording={isRecording && recordingType === 'audio'} 
+                size="small"
+                color="#ef4444" // red-500 for recording
+              />
+            </div>
+          </div>
+        )}
+        
+        {/* Recording Status Indicator for Video */}
+        {isRecording && recordingType === 'video' && (
+          <div className="flex items-center justify-center mb-3">
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+              <span className="text-sm font-medium text-red-600">REC</span>
+              <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+            </div>
+          </div>
+        )}
+        
         {isRecording && selectedActivity && (
           <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
             <div 
@@ -425,7 +460,10 @@ export const ActivityRecorder: React.FC<Props> = ({ onActivityComplete, onClose,
         
         <div className="flex justify-between text-xs text-gray-500">
           <span>ขั้นต่ำ: {selectedActivity && Math.floor(selectedActivity.minDuration / 60)} นาที</span>
-          <span>{isRecording ? 'กำลังบันทึก...' : 'พร้อมบันทึก'}</span>
+          <span>{isRecording ? 
+            (recordingType === 'audio' ? 'กำลังบันทึกเสียง...' : 
+             recordingType === 'video' ? 'กำลังบันทึกวิดีโอ...' : 'กำลังบันทึก...') : 
+            'พร้อมบันทึก'}</span>
         </div>
       </div>
 
@@ -444,7 +482,7 @@ export const ActivityRecorder: React.FC<Props> = ({ onActivityComplete, onClose,
           </button>
           <button
             onClick={() => startRecording('video')}
-            className="w-full bg-blue-500 text-white p-4 rounded-lg flex items-center justify-center hover:bg-blue-600 transition-colors"
+            className="hidden w-full bg-blue-500 text-white p-4 rounded-lg flex items-center justify-center hover:bg-blue-600 transition-colors"
           >
             <Camera className="w-6 h-6 mr-3" />
             <div className="text-left">
@@ -455,10 +493,10 @@ export const ActivityRecorder: React.FC<Props> = ({ onActivityComplete, onClose,
 
           {/* File Upload Section */}
           <div className="border-t pt-4">
-            <p className="text-sm text-gray-600 mb-3 text-center">หรืออัปโหลดรูปภาพ/วิดีโอ</p>
+            <p className="hidden text-sm text-gray-600 mb-3 text-center">หรืออัปโหลดรูปภาพ/วิดีโอ</p>
             
             <label className="w-full bg-purple-500 text-white p-4 rounded-lg flex items-center justify-center hover:bg-purple-600 transition-colors cursor-pointer">
-              <Upload className="w-6 h-6 mr-3" />
+              <Camera className="w-6 h-6 mr-3" />
               <div className="text-left">
                 <div className="font-medium">อัปโหลดไฟล์</div>
                 <div className="text-sm opacity-80">รูปภาพหรือวิดีโอ (สูงสุด 5 ไฟล์)</div>
@@ -524,20 +562,56 @@ export const ActivityRecorder: React.FC<Props> = ({ onActivityComplete, onClose,
           </div>
         </div>
       ) : (
-        <button
-          onClick={stopRecording}
-          className="w-full bg-red-500 text-white p-4 rounded-lg flex items-center justify-center hover:bg-red-600 transition-colors"
-        >
-          <Square className="w-6 h-6 mr-3" />
-          <div className="text-left">
-            <div className="font-medium">หยุดบันทึก</div>
-            <div className="text-sm opacity-80">
-              {selectedActivity && duration >= selectedActivity.minDuration ? 
-                'เวลาเพียงพอแล้ว!' : 
-                `อีก ${selectedActivity ? Math.max(0, Math.ceil((selectedActivity.minDuration - duration) / 60)) : 0} นาที`}
+        <div className="space-y-3">
+          <button
+            onClick={stopRecording}
+            className="w-full bg-red-500 text-white p-4 rounded-lg flex items-center justify-center hover:bg-red-600 transition-colors button-recording-pulse"
+          >
+            <div className="flex items-center">
+              {recordingType === 'audio' && (
+                <div className="mr-3">
+                  <WaveAnimation 
+                    isRecording={true} 
+                    size="small"
+                    color="#ffffff" // white for button
+                  />
+                </div>
+              )}
+              <Square className="w-6 h-6 mr-3" />
+              <div className="text-left">
+                <div className="font-medium">หยุดบันทึก</div>
+                <div className="text-sm opacity-80">
+                  {selectedActivity && duration >= selectedActivity.minDuration ? 
+                    'เวลาเพียงพอแล้ว!' : 
+                    `อีก ${selectedActivity ? Math.max(0, Math.ceil((selectedActivity.minDuration - duration) / 60)) : 0} นาที`}
+                </div>
+              </div>
+            </div>
+          </button>
+          
+          {/* Recording Status */}
+          <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+            <div className="flex items-center justify-center">
+              {recordingType === 'audio' ? (
+                <div className="flex items-center space-x-2 text-red-700">
+                  <Mic className="w-5 h-5" />
+                  <WaveAnimation 
+                    isRecording={true} 
+                    size="small"
+                    color="#b91c1c" // red-700
+                  />
+                  <span className="text-sm font-medium">กำลังบันทึกเสียง</span>
+                </div>
+              ) : (
+                <div className="flex items-center space-x-2 text-red-700">
+                  <Camera className="w-5 h-5" />
+                  <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                  <span className="text-sm font-medium">กำลังบันทึกวิดีโอ</span>
+                </div>
+              )}
             </div>
           </div>
-        </button>
+        </div>
       )}
     </div>
   )
@@ -714,19 +788,18 @@ export const ActivityRecorder: React.FC<Props> = ({ onActivityComplete, onClose,
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white p-6 rounded-lg w-full max-w-md max-h-screen overflow-y-auto mx-4">
+      <div className="bg-white p-6 rounded-lg w-full max-w-md max-h-screen overflow-y-auto mx-4 relative">
+        {/* Close Button - Top Right */}
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors z-10"
+        >
+          <X className="w-5 h-5 text-gray-600" />
+        </button>
         {currentStep === 'categories' && renderCategoriesStep()}
         {currentStep === 'activities' && renderActivitiesStep()}
         {currentStep === 'recording' && renderRecordingStep()}
         {currentStep === 'custom' && renderCustomStep()}
-
-        {/* Close button */}
-        <button
-          onClick={onClose}
-          className="w-full mt-6 bg-gray-500 text-white p-2 rounded hover:bg-gray-600 transition-colors"
-        >
-          ปิด
-        </button>
       </div>
     </div>
   )

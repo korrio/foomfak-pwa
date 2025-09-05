@@ -32,7 +32,12 @@ export const EQAssessment: React.FC<Props> = ({ type, onComplete, onClose }) => 
   const [currentStep, setCurrentStep] = useState<'intro' | 'questions' | 'results'>('intro')
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
   const [responses, setResponses] = useState<EQResponse[]>([])
-  const [childAge, setChildAge] = useState<number>(userData?.childAge || 3)
+  const [childAge, setChildAge] = useState<number>(
+    userData?.childAge || 
+    userData?.childProfile?.age || 
+    (userData?.childProfile?.birthDate ? 
+      new Date().getFullYear() - new Date(userData.childProfile.birthDate).getFullYear() : 3)
+  )
   const [loading, setLoading] = useState(false)
   const [results, setResults] = useState<EQAssessmentType | null>(null)
 
@@ -189,19 +194,7 @@ export const EQAssessment: React.FC<Props> = ({ type, onComplete, onClose }) => 
         ))}
       </div>
 
-      <div className="mb-6">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          อายุของลูก (ปี)
-        </label>
-        <input
-          type="number"
-          min="3"
-          max="5"
-          value={childAge}
-          onChange={(e) => setChildAge(parseInt(e.target.value) || 3)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-        />
-      </div>
+      {/* Child age is automatically fetched from user profile data */}
 
       <button
         onClick={() => setCurrentStep('questions')}

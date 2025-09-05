@@ -14,7 +14,7 @@ import {
   TrendingUp
 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
-import { rewardService, UserRedemption } from '../services/rewardService'
+import { offlineRewardService, UserRedemption } from '../services/offlineRewardService'
 import { rewards, rewardCategories, getRewardsByCategory, getPopularRewards, getAffordableRewards, Reward } from '../data/rewards'
 
 interface Props {
@@ -43,7 +43,7 @@ export const RewardsMarketplace: React.FC<Props> = ({ onClose }) => {
     if (!currentUser) return
     
     try {
-      const history = await rewardService.getUserRedemptions(currentUser.uid)
+      const history = await offlineRewardService.getUserRedemptions(currentUser.uid)
       setRedemptionHistory(history)
     } catch (error) {
       console.error('Failed to load redemption history:', error)
@@ -60,7 +60,7 @@ export const RewardsMarketplace: React.FC<Props> = ({ onClose }) => {
     
     setLoading(true)
     try {
-      const result = await rewardService.redeemReward(currentUser.uid, reward)
+      const result = await offlineRewardService.redeemReward(currentUser.uid, reward)
       
       if (result.success) {
         // Update local user data
@@ -68,8 +68,16 @@ export const RewardsMarketplace: React.FC<Props> = ({ onClose }) => {
           points: userData.points - reward.pointsCost
         })
         
-        showNotification(`แลกรางวัล "${reward.title}" สำเร็จ! รหัส: ${result.redemption?.redemptionCode}`)
+        // Close the detail modal first
         setSelectedReward(null)
+        
+        // Show success notification
+        showNotification(`แลกรางวัล "${reward.title}" สำเร็จ! รหัส: ${result.redemption?.redemptionCode}`)
+        
+        // Close the main modal after a short delay to show the result
+        setTimeout(() => {
+          onClose()
+        }, 3000)
         
         // Refresh history if viewing
         if (showRedemptionHistory) {

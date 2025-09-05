@@ -7,7 +7,10 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg', 'logo.png', 'sw-custom.js'],
+      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg', 'logo.png'],
+      devOptions: {
+        enabled: true
+      },
       manifest: {
         name: 'ฟูมฟัก - Parenting Activity Tracker',
         short_name: 'ฟูมฟัก',
@@ -33,6 +36,12 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+        additionalManifestEntries: [
+          {
+            url: '/logo.png',
+            revision: null
+          }
+        ],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,

@@ -1,9 +1,13 @@
 import { useState, useEffect } from 'react';
-import { Bell, Clock, Calendar, Target, Flame, Settings } from 'lucide-react';
+import { Bell, Clock, Calendar, Target, Flame, Settings, X } from 'lucide-react';
 import { notificationService, NotificationSchedule, NotificationPermissionState } from '../services/notificationService';
 import { useAuth } from '../contexts/AuthContext';
 
-const NotificationSettings: React.FC = () => {
+interface NotificationSettingsProps {
+  onClose?: () => void;
+}
+
+const NotificationSettings: React.FC<NotificationSettingsProps> = ({ onClose }) => {
   const { currentUser } = useAuth();
   const [permissionState, setPermissionState] = useState<NotificationPermissionState>({
     granted: false,
@@ -144,7 +148,17 @@ const NotificationSettings: React.FC = () => {
   }
 
   return (
-    <div className="max-w-md mx-auto bg-white rounded-2xl shadow-lg overflow-hidden">
+    <div className="max-w-md mx-auto bg-white rounded-2xl shadow-lg overflow-hidden max-h-screen relative">
+      {/* Close Button */}
+      {onClose && (
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-white bg-opacity-20 hover:bg-opacity-30 transition-colors z-10"
+        >
+          <X className="w-5 h-5 text-white" />
+        </button>
+      )}
+      
       <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-6 text-white">
         <div className="flex items-center gap-3">
           <Bell className="w-6 h-6" />
@@ -155,7 +169,7 @@ const NotificationSettings: React.FC = () => {
         </div>
       </div>
 
-      <div className="p-6">
+      <div className="p-6 overflow-y-auto max-h-96">
         {/* Permission Status */}
         <div className="mb-6">
           <h3 className="text-lg font-semibold mb-3">สถานะการอนุญาต</h3>

@@ -135,15 +135,16 @@ const HomePage: React.FC = () => {
     if (!currentUser) return
 
     try {
-      const fcmToken = await notificationService.requestPermission()
-      if (fcmToken) {
-        await notificationService.saveFCMToken(currentUser.uid, fcmToken)
+      // Initialize the new notification service
+      await notificationService.initialize()
+      
+      // The notification setup is now handled automatically by AuthContext
+      // Just set up foreground listener for FCM if available
+      if (typeof notificationService.setupForegroundListener === 'function') {
+        notificationService.setupForegroundListener((payload) => {
+          showNotification(payload.notification?.body || 'ได้รับการแจ้งเตือนใหม่')
+        })
       }
-
-      // Setup foreground listener
-      notificationService.setupForegroundListener((payload) => {
-        showNotification(payload.notification?.body || 'ได้รับการแจ้งเตือนใหม่')
-      })
     } catch (error) {
       console.error('Failed to setup notifications:', error)
     }
@@ -396,10 +397,13 @@ const HomePage: React.FC = () => {
                 // Then show easy activities
                 activity.difficulty === 'easy'
               )
+              .filter((activity, index, self) => 
+                index === self.findIndex(a => a.id === activity.id)
+              )
               .slice(0, 6)
-              .map(activity => (
+              .map((activity, index) => (
                 <button
-                  key={activity.id}
+                  key={activity.id || `popular-activity-${index}`}
                   onClick={() => {
                     setPreSelectedActivity(activity)
                     setShowActivityRecorder(true)
@@ -439,10 +443,16 @@ const HomePage: React.FC = () => {
               ความท้าทายวันนี้
             </h3>
             <div className="space-y-3">
-              {challenges.slice(0, 3).map(challenge => {
-                const progress = (challenge.currentValue || 0) / challenge.targetValue * 100
-                return (
-                  <div key={challenge.id} className="border border-gray-200 rounded-lg p-3">
+              {challenges
+                .filter((challenge, index, self) => 
+                  index === self.findIndex(c => c.id === challenge.id || c.challengeId === challenge.challengeId)
+                )
+                .slice(0, 3)
+                .map((challenge, index) => {
+                  const progress = (challenge.currentValue || 0) / challenge.targetValue * 100
+                  const uniqueKey = challenge.id || challenge.challengeId || `challenge-${index}`
+                  return (
+                    <div key={uniqueKey} className="border border-gray-200 rounded-lg p-3">
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center">
                         <challenge.icon className="w-4 h-4 mr-2 text-gray-600" />
@@ -515,8 +525,13 @@ const HomePage: React.FC = () => {
             </div>
           ) : activities.length > 0 ? (
             <div className="space-y-3">
-              {activities.slice(0, 5).map((activity) => (
-                <div key={activity.id} className="flex justify-between items-center p-3 bg-gray-50 rounded">
+              {activities
+                .filter((activity, index, self) => 
+                  index === self.findIndex(a => a.id === activity.id)
+                )
+                .slice(0, 5)
+                .map((activity, index) => (
+                  <div key={activity.id || `activity-${index}`} className="flex justify-between items-center p-3 bg-gray-50 rounded">
                   <div>
                     <p className="font-medium">{activity.title}</p>
                     <p className="text-sm text-gray-600">
@@ -596,6 +611,7 @@ const HomePage: React.FC = () => {
             
             showNotification('ยินดีต้อนรับสู่ฟูมฟัก! คุณได้รับโบนัสต้อนรับ 100 แต้ม 🎉')
           }}
+          onClose={() => setShowOnboarding(false)}
         />
       )}
 
@@ -629,16 +645,8 @@ const HomePage: React.FC = () => {
       {/* Notification Settings Modal */}
       {showNotificationSettings && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="relative max-w-md w-full">
-            <button
-              onClick={() => setShowNotificationSettings(false)}
-              className="absolute -top-12 right-0 text-white hover:text-gray-300 transition-colors"
-            >
-              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-            <NotificationSettings />
+          <div className="max-w-md w-full">
+            <NotificationSettings onClose={() => setShowNotificationSettings(false)} />
           </div>
         </div>
       )}

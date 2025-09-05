@@ -66,12 +66,27 @@ class NotificationService {
 
   async saveFCMToken(userId: string, token: string): Promise<void> {
     try {
-      await updateDoc(doc(db, 'users', userId), {
-        fcmToken: token,
-        lastTokenUpdate: new Date()
-      })
+      // Store FCM token locally for offline-first approach
+      localStorage.setItem(`fcm_token_${userId}`, token)
+      localStorage.setItem(`fcm_token_updated_${userId}`, new Date().toISOString())
+      
+      // Try to sync to Firestore if online (optional, will be handled by sync service)
+      if (navigator.onLine && db) {
+        try {
+          await updateDoc(doc(db, 'users', userId), {
+            fcmToken: token,
+            lastTokenUpdate: new Date()
+          })
+        } catch (error) {
+          console.log('Failed to sync FCM token to Firestore (will retry later):', error)
+          // Store for later sync
+          localStorage.setItem(`fcm_token_pending_sync_${userId}`, 'true')
+        }
+      } else {
+        localStorage.setItem(`fcm_token_pending_sync_${userId}`, 'true')
+      }
     } catch (error) {
-      console.error('Failed to save FCM token:', error)
+      console.error('Failed to save FCM token locally:', error)
     }
   }
 

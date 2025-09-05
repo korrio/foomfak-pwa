@@ -1,0 +1,111 @@
+/* Wave Animation Styles */
+
+@keyframes wave {
+  0%, 40%, 100% {
+    transform: scaleY(0.3);
+    opacity: 0.6;
+  }
+  20% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+.wave-bar {
+  animation: wave 1.2s ease-in-out infinite;
+}
+
+.wave-bar:nth-child(1) { animation-delay: 0ms; }
+.wave-bar:nth-child(2) { animation-delay: 150ms; }
+.wave-bar:nth-child(3) { animation-delay: 300ms; }
+.wave-bar:nth-child(4) { animation-delay: 450ms; }
+.wave-bar:nth-child(5) { animation-delay: 600ms; }
+.wave-bar:nth-child(6) { animation-delay: 750ms; }
+.wave-bar:nth-child(7) { animation-delay: 900ms; }
+
+/* Responsive wave bars */
+@keyframes waveSmall {
+  0%, 40%, 100% {
+    transform: scaleY(0.2);
+    opacity: 0.5;
+  }
+  20% {
+    transform: scaleY(0.8);
+    opacity: 1;
+  }
+}
+
+@keyframes waveMedium {
+  0%, 40%, 100% {
+    transform: scaleY(0.3);
+    opacity: 0.6;
+  }
+  20% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+@keyframes waveLarge {
+  0%, 40%, 100% {
+    transform: scaleY(0.4);
+    opacity: 0.7;
+  }
+  20% {
+    transform: scaleY(1.2);
+    opacity: 1;
+  }
+}
+
+/* Recording indicator pulse */
+@keyframes recordingPulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.02);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.recording-pulse {
+  animation: recordingPulse 2s ease-in-out infinite;
+}
+
+/* Button recording pulse (more subtle) */
+@keyframes buttonRecordingPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+  }
+}
+
+.button-recording-pulse {
+  animation: buttonRecordingPulse 2s infinite;
+}
+
+/* Microphone wave ripple effect */
+@keyframes ripple {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+.mic-ripple {
+  animation: ripple 1.5s ease-out infinite;
+}

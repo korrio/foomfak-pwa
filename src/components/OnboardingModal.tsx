@@ -7,9 +7,10 @@ import { storage } from '../firebase/config'
 
 interface Props {
   onComplete: () => void
+  onClose?: () => void
 }
 
-export const OnboardingModal: React.FC<Props> = ({ onComplete }) => {
+export const OnboardingModal: React.FC<Props> = ({ onComplete, onClose }) => {
   const { currentUser, updateUserData, userData } = useAuth()
   const [currentStep, setCurrentStep] = useState<'welcome' | 'profile' | 'child' | 'complete'>('welcome')
   const [loading, setLoading] = useState(false)
@@ -18,11 +19,11 @@ export const OnboardingModal: React.FC<Props> = ({ onComplete }) => {
     role: 'parent' as 'parent' | 'caretaker',
   })
   const [childProfile, setChildProfile] = useState<ChildProfile>({
-    name: '',
-    birthDate: new Date(),
-    weight: 0,
-    gender: 'male' as 'male' | 'female',
-    photoUrl: ''
+    name: userData?.childProfile?.name || userData?.childName || '',
+    birthDate: userData?.childProfile?.birthDate ? new Date(userData.childProfile.birthDate) : new Date(),
+    weight: userData?.childProfile?.weight || 0,
+    gender: userData?.childProfile?.gender || 'male' as 'male' | 'female',
+    photoUrl: userData?.childProfile?.photoUrl || ''
   })
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
   const [photoFile, setPhotoFile] = useState<File | null>(null)
@@ -443,7 +444,16 @@ export const OnboardingModal: React.FC<Props> = ({ onComplete }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg w-full max-w-md max-h-screen overflow-y-auto mx-4">
+      <div className="bg-white rounded-lg w-full max-w-md max-h-screen overflow-y-auto mx-4 relative">
+        {/* Close Button */}
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors z-10"
+          >
+            <X className="w-5 h-5 text-gray-600" />
+          </button>
+        )}
         <div className="p-6">
           {/* Progress indicator */}
           <div className="flex items-center justify-center mb-6">

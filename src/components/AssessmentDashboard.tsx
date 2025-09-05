@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
-import { eqAssessmentService } from '../services/eqAssessmentService'
+import { offlineEQAssessmentService } from '../services/offlineEQAssessmentService'
 import { EQAssessment as EQAssessmentType } from '../data/eqQuestionnaire'
 import { 
   X, 
@@ -43,7 +43,7 @@ export const AssessmentDashboard: React.FC<Props> = ({ onStartAssessment, onClos
     
     setLoading(true)
     try {
-      const userAssessments = await eqAssessmentService.getUserAssessments(currentUser.uid)
+      const userAssessments = await offlineEQAssessmentService.getUserAssessments(currentUser.uid)
       setAssessments(userAssessments)
     } catch (error) {
       console.error('Failed to load assessments:', error)
