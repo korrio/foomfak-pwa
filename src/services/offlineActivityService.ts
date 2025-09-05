@@ -17,9 +17,9 @@ export interface Activity {
   difficulty: 'easy' | 'medium' | 'hard'
   duration: number // seconds
   points: number
-  recordingType?: 'audio' | 'video'
+  recordingType?: 'audio' | 'video' | 'image'
   blob?: Blob
-  uploadedFiles?: File[]
+  uploadedFiles?: { url: string; name: string; type: string; size: number }[]
   timestamp: Date
   synced: boolean
   syncedAt?: Date
@@ -110,7 +110,7 @@ class OfflineActivityService {
     duration: number
     recordingType?: 'audio' | 'video' | 'image'
     blob?: Blob
-    uploadedFiles?: File[]
+    uploadedFiles?: { url: string; name: string; type: string; size: number }[]
     userId: string
   }): Promise<Activity> {
     const now = new Date()
@@ -153,10 +153,69 @@ class OfflineActivityService {
   }
 
   /**
-   * Get user's activities from offline storage
+   * Get user's activities from offline storage, merge with Firebase when online
    */
   async getUserActivities(userId: string, limit?: number): Promise<Activity[]> {
-    return await offlineStorage.getUserActivities(userId, limit)
+    try {
+      // Always get offline activities first (primary source)
+      const offlineActivities = await offlineStorage.getUserActivities(userId, limit)
+      
+      // If online, try to get Firebase activities and merge
+      if (this.isOnline) {
+        try {
+          const firebaseActivities = await firebaseActivityService.getUserActivities(userId)
+          
+          // Create a map of activities by ID to avoid duplicates
+          const activityMap = new Map<string, Activity>()
+          
+          // Add offline activities first (priority)
+          offlineActivities.forEach(activity => {
+            activityMap.set(activity.id, activity)
+          })
+          
+          // Add Firebase activities that don't already exist offline
+          firebaseActivities.forEach(firebaseActivity => {
+            if (!activityMap.has(firebaseActivity.id)) {
+              // Convert Firebase activity to our Activity format
+              const activity: Activity = {
+                id: firebaseActivity.id,
+                userId: firebaseActivity.userId,
+                activityId: firebaseActivity.activityId || firebaseActivity.type,
+                type: firebaseActivity.type,
+                name: firebaseActivity.title || firebaseActivity.name,
+                description: firebaseActivity.description,
+                category: firebaseActivity.category || 'general',
+                difficulty: firebaseActivity.difficulty || 'easy',
+                duration: firebaseActivity.duration || 0,
+                points: firebaseActivity.points || 0,
+                recordingType: firebaseActivity.recordingType,
+                timestamp: firebaseActivity.timestamp,
+                synced: true // Firebase activities are considered synced
+              }
+              activityMap.set(firebaseActivity.id, activity)
+            }
+          })
+          
+          // Convert map back to array and sort by timestamp (most recent first)
+          const mergedActivities = Array.from(activityMap.values())
+            .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+          
+          return limit ? mergedActivities.slice(0, limit) : mergedActivities
+          
+        } catch (firebaseError) {
+          console.error('Failed to fetch Firebase activities:', firebaseError)
+          // Fall back to offline activities only
+          return offlineActivities
+        }
+      }
+      
+      // Return offline activities if offline or Firebase fetch failed
+      return offlineActivities
+      
+    } catch (error) {
+      console.error('Failed to get user activities:', error)
+      return []
+    }
   }
 
   /**

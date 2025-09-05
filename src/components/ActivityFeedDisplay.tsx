@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { Activity } from '../types'
+import { useAuth } from '../contexts/AuthContext'
 import { 
   X, 
   Calendar, 
@@ -14,7 +15,9 @@ import {
   Heart,
   MessageCircle,
   Share2,
-  Download
+  Download,
+  Copy,
+  ExternalLink
 } from 'lucide-react'
 
 interface ActivityFeedDisplayProps {
@@ -34,9 +37,38 @@ const ActivityFeedDisplay: React.FC<ActivityFeedDisplayProps> = ({
   title = "บันทึกการเลี้ยงดู",
   onClose 
 }) => {
+  const { currentUser } = useAuth()
   const [playingAudio, setPlayingAudio] = useState<string | null>(null)
   const [audioElements, setAudioElements] = useState<{ [key: string]: HTMLAudioElement }>({})
   const [expandedImage, setExpandedImage] = useState<string | null>(null)
+
+  const shareJournalUrl = () => {
+    if (!currentUser) return
+    
+    const journalUrl = `${window.location.origin}/journal/${currentUser.uid}`
+    
+    if (navigator.share) {
+      navigator.share({
+        title: 'บันทึกการเลี้ยงดูของฉัน',
+        text: 'ดูบันทึกการเลี้ยงดูที่น่าสนใจ',
+        url: journalUrl
+      }).catch(console.error)
+    } else {
+      // Fallback: copy to clipboard
+      navigator.clipboard.writeText(journalUrl).then(() => {
+        alert('คัดลอกลิงก์บันทึกการเลี้ยงดูแล้ว!')
+      }).catch(() => {
+        // Final fallback: show in prompt
+        prompt('คัดลอกลิงก์บันทึกการเลี้ยงดู:', journalUrl)
+      })
+    }
+  }
+
+  const openPublicJournal = () => {
+    if (!currentUser) return
+    const journalUrl = `${window.location.origin}/journal/${currentUser.uid}`
+    window.open(journalUrl, '_blank')
+  }
 
   const playAudio = (audioUrl: string, activityId: string) => {
     // Stop any currently playing audio
@@ -331,22 +363,38 @@ const ActivityFeedDisplay: React.FC<ActivityFeedDisplayProps> = ({
                       <Calendar className="w-4 h-4 mr-1" />
                       {formatDate(activity.timestamp)}
                     </div>
-                    
-                    {/* Social Actions - Only show for non-readonly mode */}
-                    {!readOnly && (
-                      <div className="flex items-center space-x-4">
-                        <button className="flex items-center text-gray-500 hover:text-green-500 transition-colors">
-                          <Share2 className="w-4 h-4 mr-1" />
-                          <span className="text-sm">แชร์</span>
-                        </button>
-                      </div>
-                    )}
+                  
                   </div>
                 </div>
               ))}
             </div>
           )}
         </div>
+
+        {/* Footer - Show only for non-readonly mode and when user is authenticated */}
+        {!readOnly && currentUser && (
+          <div className="bg-gray-50 border-t border-gray-200 p-4">
+            <div className="flex items-center justify-center space-x-4">
+              <button
+                onClick={shareJournalUrl}
+                className="flex items-center bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm"
+              >
+                <Share2 className="w-4 h-4 mr-2" />
+                แชร์บันทึกการเลี้ยงดู
+              </button>
+              <button
+                onClick={openPublicJournal}
+                className="flex items-center bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors text-sm"
+              >
+                <ExternalLink className="w-4 h-4 mr-2" />
+                ดูแบบสาธารณะ
+              </button>
+            </div>
+            <p className="text-center text-xs text-gray-500 mt-2">
+              แชร์บันทึกการเลี้ยงดูของคุณให้เพื่อนและครอบครัวได้ดู
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Expanded Image Modal */}

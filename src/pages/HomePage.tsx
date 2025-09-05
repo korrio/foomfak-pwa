@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { ActivityRecorder } from '../components/ActivityRecorder'
 import { activityService } from '../services/activityService'
+import { offlineActivityService } from '../services/offlineActivityService'
 import { notificationService } from '../services/notificationService'
 import { Activity } from '../types'
 import { challengeService } from '../services/challengeService'
@@ -96,7 +97,7 @@ const HomePage: React.FC = () => {
     
     setLoadingActivities(true)
     try {
-      const userActivities = await activityService.getUserActivities(currentUser.uid)
+      const userActivities = await offlineActivityService.getUserActivities(currentUser.uid)
       setActivities(userActivities)
     } catch (error) {
       console.error('Failed to load activities:', error)
@@ -220,17 +221,9 @@ const HomePage: React.FC = () => {
     if (!currentUser || !userData) return
 
     try {
-      // Save activity to Firestore with both recorded media and uploaded files
-      const activity = await activityService.completeActivityWithFiles({
-        userId: currentUser.uid,
-        type: activityData.type,
-        title: activityData.name,
-        description: activityData.description || `${activityData.name} เป็นเวลา ${Math.floor(activityData.duration / 60)} นาที`,
-        duration: activityData.duration,
-        points: activityData.points,
-        status: 'completed'
-      }, activityData.blob, activityData.uploadedFiles)
-
+      // Note: Activity is already saved by ActivityRecorder via offlineActivityService
+      // We just need to process challenges/achievements and update user data
+      
       // Process challenges and achievements
       const { completedChallenges, newAchievements } = await challengeService.processActivity(
         currentUser.uid, 
@@ -246,9 +239,6 @@ const HomePage: React.FC = () => {
         streak: userData.streak + 1,
         lastActive: new Date()
       })
-
-      // Add to local activities list
-      setActivities(prev => [activity, ...prev])
 
       // Refresh activities from server to ensure consistency
       await loadUserActivities()

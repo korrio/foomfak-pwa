@@ -34,9 +34,9 @@ interface DBSchema {
     difficulty: 'easy' | 'medium' | 'hard'
     duration: number // seconds
     points: number
-    recordingType?: 'audio' | 'video'
+    recordingType?: 'audio' | 'video' | 'image'
     blob?: Blob
-    uploadedFiles?: File[]
+    uploadedFiles?: { url: string; name: string; type: string; size: number }[]
     timestamp: Date
     synced: boolean
     syncedAt?: Date

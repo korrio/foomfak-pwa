@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
-import { activityService } from '../services/activityService'
+import { offlineActivityService } from '../services/offlineActivityService'
 import { Activity } from '../types'
 import ActivityFeedDisplay from './ActivityFeedDisplay'
 
@@ -24,7 +24,7 @@ const ParentingFeed: React.FC<ParentingFeedProps> = ({ onClose }) => {
     
     try {
       setLoading(true)
-      const userActivities = await activityService.getUserActivities(currentUser.uid)
+      const userActivities = await offlineActivityService.getUserActivities(currentUser.uid)
       // Sort by timestamp descending (most recent first)
       const sortedActivities = userActivities.sort((a, b) => 
         new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
