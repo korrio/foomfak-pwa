@@ -33,11 +33,11 @@ function InstallPWA() {
     <button
       className="w-full bg-gradient-to-r from-purple-500 to-indigo-500 text-white px-4 py-3 rounded-lg flex items-center justify-center hover:from-purple-600 hover:to-indigo-600 transition-all font-medium"
       id="setup_button"
-      aria-label="Install app"
-      title="Install app"
+      aria-label="ติดตั้งแอ๊พบนเครื่อง"
+      title="ติดตั้งแอ๊พบนเครื่อง"
       onClick={onClick}
     >
-      📱 Install App
+      📱 ติดตั้งแอ๊พบนเครื่อง
     </button>
   );
 }

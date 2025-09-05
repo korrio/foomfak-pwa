@@ -784,7 +784,7 @@ const AuthScreen: React.FC = () => {
               className="w-20 h-20 mx-auto rounded-full border-4 border-blue-100"
             />
           </div>
-          <h1 className="text-3xl font-bold text-blue-600 mb-2">ฟูมฟัก</h1>
+          {/*<h1 className="text-3xl font-bold text-blue-600 mb-2">ฟูมฟัก</h1>*/}
           <p className="text-gray-600">แอปพลิเคชันสำหรับผู้ปกครองวัยรุ่น</p>
           <p className="text-sm text-gray-500 mt-1">เลือกวิธีการเข้าสู่ระบบ</p>
         </div>
@@ -833,7 +833,7 @@ const AuthScreen: React.FC = () => {
               }
             }}
             disabled={loading}
-            className="w-full bg-gray-500 text-white px-4 py-3 rounded-lg flex items-center justify-center hover:bg-gray-600 transition-colors disabled:opacity-50 font-medium"
+            className="hidden w-full bg-gray-500 text-white px-4 py-3 rounded-lg flex items-center justify-center hover:bg-gray-600 transition-colors disabled:opacity-50 font-medium"
           >
             <User className="w-5 h-5 mr-3" />
             เข้าสู่ระบบแบบแขก
@@ -871,8 +871,15 @@ const AuthScreen: React.FC = () => {
         )}
 
         <div className="mt-6 pt-4 border-t border-gray-200">
+          <div className="mb-2 text-center">
+            <img 
+              src="https://www.eef.or.th/wp-content/uploads/2020/09/th-logo-eef-1400x621.png" 
+              alt="กองทุนเพื่อความเสมอภาคทางการศึกษา"
+              className="h-20 mx-auto"
+            />
+          </div>
           <p className="text-xs text-center text-gray-500">
-            สำหรับผู้ปกครองวัยรุ่นที่ต้องการพัฒนาทักษะการเลี้ยงดูลูก
+            พัฒนาภายใต้งบประมาณจาก<br/> กองทุนเพื่อความเสมอภาคทางการศึกษา (กสศ.)
           </p>
           
           {/* App Version */}
