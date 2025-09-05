@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { activityService } from '../services/activityService'
 import { Activity } from '../types'
 import ActivityFeedDisplay from '../components/ActivityFeedDisplay'
@@ -7,6 +7,7 @@ import { Share2, Baby, Calendar, Scale, ArrowLeft } from 'lucide-react'
 
 const PublicJournalPage: React.FC = () => {
   const { userId } = useParams<{ userId: string }>()
+  const navigate = useNavigate()
   const [activities, setActivities] = useState<Activity[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -97,7 +98,7 @@ const PublicJournalPage: React.FC = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center flex-1">
               <button
-                onClick={() => window.history.back()}
+                onClick={() => navigate('/')}
                 className="text-gray-500 hover:text-gray-700 transition-colors mr-4"
                 title="กลับ"
               >

@@ -298,7 +298,7 @@ const ActivityFeedDisplay: React.FC<ActivityFeedDisplayProps> = ({
   }
 
   const containerClasses = readOnly 
-    ? "min-h-screen bg-gray-50 p-4"
+    ? "min-h-screen"
     : "fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
 
   const contentClasses = readOnly
